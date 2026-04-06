@@ -1,0 +1,109 @@
+// src/app/bonding/page.tsx
+"use client";
+
+import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
+import { Plus, ChevronRight, Flame } from "lucide-react";
+import { PageHeader } from "@/components/layout/page-header";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { bondingPackages, myBondingList, TOKEN_SYMBOL } from "@/lib/mock-data";
+import { formatBalance } from "@/lib/utils";
+
+export default function BondingPage() {
+  const router = useRouter();
+
+  return (
+    <div className="flex flex-col min-h-screen pb-24">
+      <PageHeader title="Bonding" />
+
+      {/* Bonding Packages */}
+      <div className="px-4 pt-4">
+        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+          Bonding Package
+        </h2>
+        <div className="space-y-3">
+          {bondingPackages.map((pkg, i) => (
+            <motion.div
+              key={pkg.id}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.08 }}
+              className="bg-navy-lighter/50 border border-white/5 rounded-xl p-4 flex items-center gap-4"
+            >
+              {/* Icon */}
+              <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0">
+                <Flame className="w-5 h-5 text-orange-400" />
+              </div>
+
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-foreground">{pkg.name}</p>
+                <p className="text-[11px] text-muted-foreground">
+                  Daily profit up to{" "}
+                  <span className="text-gold font-semibold">
+                    {pkg.dailyProfit}%
+                  </span>
+                </p>
+              </div>
+
+              {/* Add button */}
+              <button
+                onClick={() => router.push(`/bonding/add?package=${pkg.id}`)}
+                className="flex items-center gap-1 px-3 py-1.5 bg-gold/10 border border-gold/20 rounded-lg text-[10px] font-bold text-gold hover:bg-gold/20 transition-colors"
+              >
+                <Plus className="w-3 h-3" />
+                ADD NEW
+              </button>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+
+      {/* My Bonding List */}
+      <div className="px-4 pt-6">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-4 h-4 rounded bg-gold/20 flex items-center justify-center">
+            <span className="text-[10px]">📋</span>
+          </div>
+          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            My Bonding List
+          </h2>
+        </div>
+
+        <div className="space-y-3">
+          {myBondingList.map((bond, i) => (
+            <motion.div
+              key={bond.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 + i * 0.08 }}
+              className="bg-navy-lighter/50 border border-white/5 rounded-xl p-4"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-foreground">
+                    {bond.packageName}
+                  </span>
+                  <span className="text-[11px] text-gold font-semibold">
+                    × {formatBalance(bond.amount)} {bond.token}
+                  </span>
+                </div>
+                <button
+                  className="text-[10px] font-bold text-gold hover:underline"
+                >
+                  DETAIL
+                </button>
+              </div>
+              <div className="flex items-center justify-between">
+                <StatusBadge status={bond.status} />
+                <span className="text-[10px] text-muted-foreground">
+                  {bond.startDate} — {bond.endDate}
+                </span>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
