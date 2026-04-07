@@ -3,18 +3,44 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowDownUp } from "lucide-react";
+import { FormFeedback } from "@/components/ui/form-feedback";
 import { useWallet } from "@/lib/wallet-context";
 import { TOKEN_SYMBOL, TOKEN_PRICE_USDT } from "@/lib/mock-data";
 import { formatBalance } from "@/lib/utils";
 
 export function SwapForm() {
-  const { walletAddress } = useWallet();
+  const { walletAddress, balance } = useWallet();
   const [amount, setAmount] = useState("");
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const minAmount = 10;
   const feeRate = 0.01;
+  const hasAmount = amount.trim() !== "";
+  const numAmount = Number(amount);
+  const isValidAmount =
+    hasAmount &&
+    Number.isFinite(numAmount) &&
+    numAmount >= minAmount &&
+    numAmount <= balance;
+  const fee = isValidAmount ? numAmount * feeRate : 0;
+  const receiveUsdt = isValidAmount ? (numAmount - fee) * TOKEN_PRICE_USDT : 0;
+  const validationMessage =
+    hasAmount && !Number.isFinite(numAmount)
+      ? `Enter a valid ${TOKEN_SYMBOL} amount.`
+      : hasAmount && numAmount < minAmount
+        ? `Minimum swap is ${minAmount} ${TOKEN_SYMBOL}.`
+        : hasAmount && numAmount > balance
+          ? `Available balance is ${formatBalance(balance)} ${TOKEN_SYMBOL}.`
+          : null;
 
-  const numAmount = parseFloat(amount) || 0;
-  const fee = numAmount * feeRate;
-  const receiveUsdt = (numAmount - fee) * TOKEN_PRICE_USDT;
+  function handleAmountChange(value: string) {
+    setAmount(value);
+    if (isSubmitted) setIsSubmitted(false);
+  }
+
+  function handleSubmit() {
+    if (!isValidAmount) return;
+    setIsSubmitted(true);
+  }
 
   return (
     <motion.div
@@ -23,62 +49,76 @@ export function SwapForm() {
       transition={{ delay: 0.1 }}
       className="space-y-4"
     >
-      {/* Amount */}
       <div>
-        <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2 block">
+        <label className="mb-2 block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
           Amount ({TOKEN_SYMBOL})
         </label>
         <input
           type="number"
           value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          placeholder="No. 10 TTO"
-          className="w-full bg-navy-lighter border border-white/10 rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-gold/40 focus:ring-1 focus:ring-gold/20 transition-all"
+          onChange={(e) => handleAmountChange(e.target.value)}
+          placeholder={`Minimum ${minAmount} ${TOKEN_SYMBOL}`}
+          className="w-full rounded-xl border border-white/10 bg-navy-lighter px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 transition-all focus:border-gold/40 focus:outline-none focus:ring-1 focus:ring-gold/20"
         />
+        <p className="mt-2 text-[10px] text-muted-foreground">
+          Available: {formatBalance(balance)} {TOKEN_SYMBOL}
+        </p>
       </div>
 
-      {/* Arrow icon */}
       <div className="flex justify-center">
-        <div className="w-8 h-8 rounded-full bg-navy-lighter border border-white/10 flex items-center justify-center">
-          <ArrowDownUp className="w-4 h-4 text-gold" />
+        <div className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-navy-lighter">
+          <ArrowDownUp className="h-4 w-4 text-gold" />
         </div>
       </div>
 
-      {/* Fee */}
       <div>
-        <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2 block">
+        <label className="mb-2 block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
           Fee ({TOKEN_SYMBOL})
         </label>
-        <div className="w-full bg-navy-lighter/50 border border-white/5 rounded-xl px-4 py-3 text-sm text-true-gold">
-          {numAmount > 0 ? formatBalance(fee) : "0"}
+        <div className="w-full rounded-xl border border-white/5 bg-navy-lighter/50 px-4 py-3 text-sm text-true-gold">
+          {fee > 0 ? formatBalance(fee) : "0"}
         </div>
       </div>
 
-      {/* Receive USDT */}
       <div>
-        <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2 block">
+        <label className="mb-2 block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
           Receive (USDT)
         </label>
-        <div className="w-full bg-navy-lighter/50 border border-white/5 rounded-xl px-4 py-3 text-sm text-true-gold font-semibold">
-          {numAmount > 0 ? `$${formatBalance(receiveUsdt)}` : "$0.00"}
+        <div className="w-full rounded-xl border border-white/5 bg-navy-lighter/50 px-4 py-3 text-sm font-semibold text-true-gold">
+          {receiveUsdt > 0 ? `$${formatBalance(receiveUsdt)}` : "$0.00"}
         </div>
       </div>
 
-      {/* Recipient Address */}
       <div>
-        <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2 block">
+        <label className="mb-2 block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
           Recipient Address
         </label>
-        <div className="w-full bg-navy-lighter/50 border border-white/5 rounded-xl px-4 py-3 text-[11px] text-muted-foreground font-mono break-all">
+        <div className="w-full break-all rounded-xl border border-white/5 bg-navy-lighter/50 px-4 py-3 font-mono text-[11px] text-muted-foreground">
           {walletAddress}
         </div>
       </div>
 
-      {/* Swap button */}
+      {validationMessage ? (
+        <FormFeedback variant="error">{validationMessage}</FormFeedback>
+      ) : null}
+
+      {isSubmitted ? (
+        <FormFeedback variant="success">
+          Swap preview submitted. Backend execution can replace this confirmation
+          state later.
+        </FormFeedback>
+      ) : (
+        <FormFeedback>
+          A {formatBalance(feeRate * 100)}% fee is applied before the USDT
+          estimate is calculated.
+        </FormFeedback>
+      )}
+
       <motion.button
         whileTap={{ scale: 0.98 }}
-        className="btn-cash w-full py-3.5 rounded-xl text-sm font-bold tracking-wide mt-2"
-        onClick={() => alert("Swap simulated!")}
+        className="btn-cash mt-2 w-full rounded-xl py-3.5 text-sm font-bold tracking-wide disabled:cursor-not-allowed disabled:opacity-60"
+        onClick={handleSubmit}
+        disabled={!isValidAmount}
       >
         SWAP
       </motion.button>

@@ -1,12 +1,13 @@
-// src/app/bonding/add/page.tsx
 "use client";
 
-import { useState, Suspense } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Flame } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
+import { FormFeedback } from "@/components/ui/form-feedback";
 import { bondingPackages, TOKEN_SYMBOL } from "@/lib/mock-data";
+import { formatBalance } from "@/lib/utils";
 
 function AddBondingForm() {
   const searchParams = useSearchParams();
@@ -16,35 +17,63 @@ function AddBondingForm() {
     preselectedId || String(bondingPackages[1].id)
   );
   const [amount, setAmount] = useState("50000");
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const pkg = bondingPackages.find((p) => String(p.id) === selectedPackage);
+  const pkg = bondingPackages.find((item) => String(item.id) === selectedPackage);
+  const minimumAmount = pkg?.minAmount ?? 0;
+  const hasAmount = amount.trim() !== "";
+  const parsedAmount = Number(amount);
+  const isValidAmount =
+    hasAmount &&
+    Number.isFinite(parsedAmount) &&
+    parsedAmount >= minimumAmount;
+  const estimatedDailyReturn =
+    pkg && isValidAmount ? parsedAmount * (pkg.dailyProfit / 100) : 0;
+  const validationMessage =
+    hasAmount && !Number.isFinite(parsedAmount)
+      ? `Enter a valid ${TOKEN_SYMBOL} amount.`
+      : hasAmount && parsedAmount < minimumAmount
+        ? `Minimum for this package is ${formatBalance(minimumAmount)} ${TOKEN_SYMBOL}.`
+        : null;
+
+  function handleAmountChange(value: string) {
+    setAmount(value);
+    if (isSubmitted) setIsSubmitted(false);
+  }
+
+  function handlePackageChange(value: string) {
+    setSelectedPackage(value);
+    if (isSubmitted) setIsSubmitted(false);
+  }
+
+  function handleSubmit() {
+    if (!isValidAmount) return;
+    setIsSubmitted(true);
+  }
 
   return (
     <div className="px-4 pt-4">
-      {/* Selected Package Info */}
-      {pkg && (
+      {pkg ? (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-navy-lighter/50 border border-white/5 rounded-xl p-4 mb-6 flex items-center gap-4"
+          className="mb-6 flex items-center gap-4 rounded-xl border border-white/5 bg-navy-lighter/50 p-4"
         >
-          <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0">
-            <Flame className="w-5 h-5 text-orange-400" />
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-500/10">
+            <Flame className="h-5 w-5 text-orange-400" />
           </div>
           <div>
             <p className="text-sm font-bold text-foreground">{pkg.name}</p>
             <p className="text-[11px] text-muted-foreground">
               Daily profit up to{" "}
-              <span className="text-gold font-semibold">
-                {pkg.dailyProfit}%
-              </span>
+              <span className="font-semibold text-gold">{pkg.dailyProfit}%</span>
             </p>
           </div>
         </motion.div>
-      )}
+      ) : null}
 
-      <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">
-        ADD NEW BONDING
+      <h2 className="mb-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        Add New Bonding
       </h2>
 
       <motion.div
@@ -53,45 +82,77 @@ function AddBondingForm() {
         transition={{ delay: 0.1 }}
         className="space-y-5"
       >
-        {/* Bonding Package Select */}
         <div>
-          <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2 block">
+          <label className="mb-2 block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
             Bonding Package
           </label>
           <select
             value={selectedPackage}
-            onChange={(e) => setSelectedPackage(e.target.value)}
-            className="w-full bg-navy-lighter border border-white/10 rounded-xl px-4 py-3 text-sm text-foreground focus:outline-none focus:border-gold/40 focus:ring-1 focus:ring-gold/20 transition-all appearance-none cursor-pointer"
+            onChange={(e) => handlePackageChange(e.target.value)}
+            className="w-full cursor-pointer appearance-none rounded-xl border border-white/10 bg-navy-lighter px-4 py-3 text-sm text-foreground transition-all focus:border-gold/40 focus:outline-none focus:ring-1 focus:ring-gold/20"
           >
-            {bondingPackages.map((p) => (
-              <option key={p.id} value={String(p.id)} className="bg-navy-light">
-                {p.days} Days
+            {bondingPackages.map((item) => (
+              <option
+                key={item.id}
+                value={String(item.id)}
+                className="bg-navy-light"
+              >
+                {item.days} Days
               </option>
             ))}
           </select>
         </div>
 
-        {/* Amount */}
         <div>
-          <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2 block">
+          <label className="mb-2 block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
             Amount ({TOKEN_SYMBOL})
           </label>
           <input
             type="number"
             value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            onChange={(e) => handleAmountChange(e.target.value)}
             placeholder="Enter amount"
-            className="w-full bg-navy-lighter border border-white/10 rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-gold/40 focus:ring-1 focus:ring-gold/20 transition-all"
+            className="w-full rounded-xl border border-white/10 bg-navy-lighter px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 transition-all focus:border-gold/40 focus:outline-none focus:ring-1 focus:ring-gold/20"
           />
+          <p className="mt-2 text-[10px] text-muted-foreground">
+            Minimum: {formatBalance(minimumAmount)} {TOKEN_SYMBOL}
+          </p>
         </div>
 
-        {/* Create Contract button */}
+        <div>
+          <label className="mb-2 block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            Estimated Daily Return
+          </label>
+          <div className="w-full rounded-xl border border-white/5 bg-navy-lighter/50 px-4 py-3 text-sm font-semibold text-true-gold">
+            {estimatedDailyReturn > 0
+              ? `${formatBalance(estimatedDailyReturn)} ${TOKEN_SYMBOL}`
+              : `0 ${TOKEN_SYMBOL}`}
+          </div>
+        </div>
+
+        {validationMessage ? (
+          <FormFeedback variant="error">{validationMessage}</FormFeedback>
+        ) : null}
+
+        {isSubmitted ? (
+          <FormFeedback variant="success">
+            Bonding contract draft is ready. You can connect backend creation to
+            this confirmation state later.
+          </FormFeedback>
+        ) : (
+          <FormFeedback>
+            Select a package and enter an amount to preview the minimum and
+            estimated daily return.
+          </FormFeedback>
+        )}
+
         <motion.button
           whileTap={{ scale: 0.98 }}
-          className="btn-gold w-full py-3.5 rounded-xl text-sm font-bold tracking-wide mt-4"
-          onClick={() => alert("Contract created (simulated)")}
+          className="btn-gold mt-4 w-full rounded-xl py-3.5 text-sm font-bold tracking-wide disabled:cursor-not-allowed disabled:opacity-60"
+          onClick={handleSubmit}
+          disabled={!isValidAmount}
         >
-          CREATE CONTRACT
+          Create Contract
         </motion.button>
       </motion.div>
     </div>
@@ -100,11 +161,11 @@ function AddBondingForm() {
 
 export default function AddBondingPage() {
   return (
-    <div className="flex flex-col min-h-screen pb-24">
+    <div className="flex min-h-screen flex-col pb-24">
       <PageHeader title="Bonding Package" />
       <Suspense
         fallback={
-          <div className="flex items-center justify-center py-20 text-muted-foreground text-sm">
+          <div className="flex items-center justify-center py-20 text-sm text-muted-foreground">
             Loading...
           </div>
         }

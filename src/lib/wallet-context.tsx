@@ -1,7 +1,11 @@
-// src/lib/wallet-context.tsx
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useSyncExternalStore,
+} from "react";
 import { generateMockAddress, generateUsername } from "@/lib/utils";
 
 interface WalletState {
@@ -14,70 +18,141 @@ interface WalletState {
   disconnect: () => void;
 }
 
+type PersistedWalletState = Omit<WalletState, "connect" | "disconnect">;
+
 const WalletContext = createContext<WalletState | undefined>(undefined);
+const WALLET_STORAGE_KEY = "wallet_state";
+
+const defaultWalletState: PersistedWalletState = {
+  isConnected: false,
+  walletAddress: "",
+  username: "",
+  balance: 0,
+  privateBonding: 0,
+};
+
+const walletListeners = new Set<() => void>();
+let currentWalletSnapshot: PersistedWalletState = defaultWalletState;
+
+function isSameWalletState(
+  left: PersistedWalletState,
+  right: PersistedWalletState
+) {
+  return (
+    left.isConnected === right.isConnected &&
+    left.walletAddress === right.walletAddress &&
+    left.username === right.username &&
+    left.balance === right.balance &&
+    left.privateBonding === right.privateBonding
+  );
+}
+
+function sanitizeWalletState(
+  value: Partial<PersistedWalletState> | null | undefined
+): PersistedWalletState {
+  return {
+    isConnected: Boolean(value?.isConnected),
+    walletAddress:
+      typeof value?.walletAddress === "string" ? value.walletAddress : "",
+    username: typeof value?.username === "string" ? value.username : "",
+    balance: typeof value?.balance === "number" ? value.balance : 0,
+    privateBonding:
+      typeof value?.privateBonding === "number" ? value.privateBonding : 0,
+  };
+}
+
+function readWalletState(): PersistedWalletState {
+  if (typeof window === "undefined") return defaultWalletState;
+
+  const saved = window.localStorage.getItem(WALLET_STORAGE_KEY);
+
+  if (!saved) {
+    currentWalletSnapshot = defaultWalletState;
+    return currentWalletSnapshot;
+  }
+
+  try {
+    const nextSnapshot = sanitizeWalletState(JSON.parse(saved));
+
+    if (!isSameWalletState(currentWalletSnapshot, nextSnapshot)) {
+      currentWalletSnapshot = nextSnapshot;
+    }
+
+    return currentWalletSnapshot;
+  } catch {
+    currentWalletSnapshot = defaultWalletState;
+    return currentWalletSnapshot;
+  }
+}
+
+function subscribeToWalletState(listener: () => void) {
+  walletListeners.add(listener);
+
+  if (typeof window === "undefined") {
+    return () => walletListeners.delete(listener);
+  }
+
+  const handleStorage = (event: StorageEvent) => {
+    if (event.key === WALLET_STORAGE_KEY) {
+      listener();
+    }
+  };
+
+  window.addEventListener("storage", handleStorage);
+
+  return () => {
+    walletListeners.delete(listener);
+    window.removeEventListener("storage", handleStorage);
+  };
+}
+
+function notifyWalletListeners() {
+  walletListeners.forEach((listener) => listener());
+}
+
+function persistWalletState(nextState: PersistedWalletState) {
+  if (typeof window === "undefined") return;
+
+  currentWalletSnapshot = nextState;
+  window.localStorage.setItem(WALLET_STORAGE_KEY, JSON.stringify(nextState));
+  notifyWalletListeners();
+}
+
+function clearWalletState() {
+  if (typeof window === "undefined") return;
+
+  currentWalletSnapshot = defaultWalletState;
+  window.localStorage.removeItem(WALLET_STORAGE_KEY);
+  notifyWalletListeners();
+}
 
 export function WalletProvider({ children }: { children: React.ReactNode }) {
-  const [isConnected, setIsConnected] = useState(false);
-  const [walletAddress, setWalletAddress] = useState("");
-  const [username, setUsername] = useState("");
-  const [balance, setBalance] = useState(0);
-  const [privateBonding, setPrivateBonding] = useState(0);
-  const [isHydrated, setIsHydrated] = useState(false);
-
-  useEffect(() => {
-    const saved = localStorage.getItem("wallet_state");
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setIsConnected(parsed.isConnected || false);
-        setWalletAddress(parsed.walletAddress || "");
-        setUsername(parsed.username || "");
-        setBalance(parsed.balance || 0);
-        setPrivateBonding(parsed.privateBonding || 0);
-      } catch {
-        // skip
-      }
-    }
-    setIsHydrated(true);
-  }, []);
-
-  useEffect(() => {
-    if (!isHydrated) return;
-    localStorage.setItem(
-      "wallet_state",
-      JSON.stringify({ isConnected, walletAddress, username, balance, privateBonding })
-    );
-  }, [isConnected, walletAddress, username, balance, privateBonding, isHydrated]);
+  const walletState = useSyncExternalStore(
+    subscribeToWalletState,
+    readWalletState,
+    () => defaultWalletState
+  );
 
   const connect = useCallback(async () => {
-    // Simulate connection delay
-    await new Promise((r) => setTimeout(r, 2500));
-    const addr = generateMockAddress();
-    const user = generateUsername();
-    setWalletAddress(addr);
-    setUsername(user);
-    setBalance(18859.8);
-    setPrivateBonding(79070.8);
-    setIsConnected(true);
+    await new Promise((resolve) => setTimeout(resolve, 2500));
+
+    persistWalletState({
+      isConnected: true,
+      walletAddress: generateMockAddress(),
+      username: generateUsername(),
+      balance: 18859.8,
+      privateBonding: 79070.8,
+    });
   }, []);
 
   const disconnect = useCallback(() => {
-    setIsConnected(false);
-    setWalletAddress("");
-    setUsername("");
-    setBalance(0);
-    setPrivateBonding(0);
-    localStorage.removeItem("wallet_state");
+    clearWalletState();
   }, []);
 
   return (
     <WalletContext.Provider
       value={{
-        isConnected,
-        walletAddress,
-        username,
-        balance,
-        privateBonding,
+        ...walletState,
         connect,
         disconnect,
       }}
