@@ -12,6 +12,7 @@
 - Replaced the dead dashboard withdraw button handler with a real route.
 - Added validation for invalid, minimum, and over-balance inputs in the updated forms.
 - Fixed withdraw calculations so `Network Fee` is shown in USD and deducted from the final USD receive amount.
+- Updated shared back-button behavior so top-level pages return to `/dashboard` and nested pages return to their parent route.
 
 ## refactor
 - Refactored wallet persistence in `wallet-context.tsx` to use a storage-backed `useSyncExternalStore` pattern.

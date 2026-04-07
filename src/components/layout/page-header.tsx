@@ -1,7 +1,7 @@
 // src/components/layout/page-header.tsx
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 
 interface PageHeaderProps {
@@ -12,6 +12,17 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, showBack = true, rightAction }: PageHeaderProps) {
   const router = useRouter();
+  const pathname = usePathname();
+
+  function getBackTarget() {
+    const segments = pathname.split("/").filter(Boolean);
+
+    if (segments.length <= 1) {
+      return "/dashboard";
+    }
+
+    return `/${segments.slice(0, -1).join("/")}`;
+  }
 
   return (
     <>
@@ -20,7 +31,7 @@ export function PageHeader({ title, showBack = true, rightAction }: PageHeaderPr
           <div className="flex items-center gap-2 min-w-[40px]">
             {showBack && (
               <button
-                onClick={() => router.back()}
+                onClick={() => router.push(getBackTarget())}
                 className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 transition-colors"
               >
                 <ChevronLeft className="w-5 h-5 text-gold" />
