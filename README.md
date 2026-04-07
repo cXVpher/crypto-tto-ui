@@ -21,3 +21,5 @@
 ## style
 - Replaced purchase distribution emoji usage with Lucide icons.
 - Improved the visual presentation of purchase, swap, bonding add, and withdraw feedback states for consistency.
+- Changed the browser tab icon to use the coin logo via `src/app/icon.png`.
+- Renamed user-facing purchase labels to deposit across the dashboard, deposit page, form, and history tab.

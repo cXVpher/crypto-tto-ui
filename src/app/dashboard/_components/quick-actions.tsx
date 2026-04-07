@@ -11,7 +11,7 @@ export function QuickActions() {
         onClick={() => router.push("/purchase")}
         className="btn-cash flex-1 py-3 rounded-xl text-sm font-bold tracking-wide"
       >
-        PURCHASE
+        DEPOSIT
       </button>
       <button
         onClick={() => router.push("/withdraw")}

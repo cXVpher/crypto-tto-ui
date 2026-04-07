@@ -10,7 +10,7 @@ import { PurchaseForm } from "./_components/purchase-form";
 export default function PurchasePage() {
   return (
     <div className="flex flex-col min-h-screen pb-24">
-      <PageHeader title={`Purchase ${TOKEN_SYMBOL}`} />
+      <PageHeader title={`Deposit ${TOKEN_SYMBOL}`} />
 
       <div className="px-4 pt-6">
         {/* Logo */}

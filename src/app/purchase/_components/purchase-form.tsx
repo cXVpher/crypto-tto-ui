@@ -21,7 +21,7 @@ export function PurchaseForm() {
     hasAmount && !Number.isFinite(parsedAmount)
       ? "Enter a valid USDT amount."
       : hasAmount && parsedAmount < minAmount
-        ? `Minimum purchase is ${minAmount} USDT.`
+        ? `Minimum deposit is ${minAmount} USDT.`
         : null;
 
   function handleAmountChange(value: string) {
@@ -105,12 +105,12 @@ export function PurchaseForm() {
 
       {isSubmitted ? (
         <FormFeedback variant="success">
-          Purchase request prepared successfully. Backend confirmation can plug
+          Deposit request prepared successfully. Backend confirmation can plug
           into this state next.
         </FormFeedback>
       ) : (
         <FormFeedback>
-          Enter a purchase amount to preview how much {TOKEN_SYMBOL} you will
+          Enter a deposit amount to preview how much {TOKEN_SYMBOL} you will
           receive.
         </FormFeedback>
       )}
@@ -121,7 +121,7 @@ export function PurchaseForm() {
         onClick={handleSubmit}
         disabled={!isValidAmount}
       >
-        PURCHASE
+        DEPOSIT
       </motion.button>
     </motion.div>
   );

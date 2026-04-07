@@ -7,7 +7,7 @@ interface HistoryTabsProps {
 
 export function HistoryTabs({ activeTab, setActiveTab }: HistoryTabsProps) {
   const tabs = [
-    { key: "purchase" as const, label: "PURCHASE HISTORY" },
+    { key: "purchase" as const, label: "DEPOSIT HISTORY" },
     { key: "withdraw" as const, label: "WITHDRAW HISTORY" },
   ];
 
