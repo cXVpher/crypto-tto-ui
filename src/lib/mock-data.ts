@@ -150,6 +150,27 @@ export const purchaseHistory = [
   },
 ];
 
+export const withdrawHistory = [
+  {
+    id: 1,
+    amount: 1200,
+    token: "TTO",
+    wallet: "0x473D9e1ea37C161D96cB",
+    fee: 12,
+    date: "26 Mar 2026",
+    status: "Completed",
+  },
+  {
+    id: 2,
+    amount: 500,
+    token: "TTO",
+    wallet: "0xBD45b04534e53d4a83",
+    fee: 5,
+    date: "18 Mar 2026",
+    status: "Pending",
+  },
+];
+
 export const userProfile = {
   username: "UserCaFA53C098",
   rankLevel: "TITAN 4",

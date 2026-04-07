@@ -14,13 +14,15 @@
   --font-heading: var(--font-sans);
 
   /* Custom crypto colors */
-  --color-navy: #0a0e1a;
-  --color-navy-light: #111827;
-  --color-navy-lighter: #1e2a3a;
-  --color-gold: #f5a623;
-  --color-gold-dark: #d4941f;
-  --color-cash: #22c55e;
-  --color-cash-dark: #16a34a;
+  --color-navy: #000000;
+  --color-navy-light: #020617;
+  --color-navy-lighter: #1e3a8a;
+  --color-gold: #3b82f6;
+  --color-gold-dark: #2563eb;
+  --color-true-gold: #f5a623;
+  --color-true-gold-dark: #d4941f;
+  --color-cash: #3b82f6;
+  --color-cash-dark: #2563eb;
 
   /* shadcn mappings */
   --color-sidebar-ring: var(--sidebar-ring);
@@ -63,38 +65,38 @@
 
 /* Always dark — crypto app */
 :root {
-  --background: #0a0e1a;
+  --background: #000000;
   --foreground: #f8fafc;
-  --card: #111827;
+  --card: #020617;
   --card-foreground: #f8fafc;
-  --popover: #111827;
+  --popover: #020617;
   --popover-foreground: #f8fafc;
-  --primary: #f5a623;
-  --primary-foreground: #0a0e1a;
-  --secondary: #1e2a3a;
+  --primary: #3b82f6;
+  --primary-foreground: #000000;
+  --secondary: #1e3a8a;
   --secondary-foreground: #f8fafc;
-  --muted: #1e2a3a;
+  --muted: #1e3a8a;
   --muted-foreground: #94a3b8;
-  --accent: #1e2a3a;
+  --accent: #1e3a8a;
   --accent-foreground: #f8fafc;
   --destructive: #ef4444;
   --border: rgba(255, 255, 255, 0.08);
   --input: rgba(255, 255, 255, 0.1);
-  --ring: #f5a623;
-  --chart-1: #f5a623;
+  --ring: #3b82f6;
+  --chart-1: #3b82f6;
   --chart-2: #22c55e;
   --chart-3: #3b82f6;
   --chart-4: #a855f7;
   --chart-5: #ef4444;
   --radius: 0.75rem;
-  --sidebar: #111827;
+  --sidebar: #020617;
   --sidebar-foreground: #f8fafc;
-  --sidebar-primary: #f5a623;
-  --sidebar-primary-foreground: #0a0e1a;
-  --sidebar-accent: #1e2a3a;
+  --sidebar-primary: #3b82f6;
+  --sidebar-primary-foreground: #000000;
+  --sidebar-accent: #1e3a8a;
   --sidebar-accent-foreground: #f8fafc;
   --sidebar-border: rgba(255, 255, 255, 0.08);
-  --sidebar-ring: #f5a623;
+  --sidebar-ring: #3b82f6;
 }
 
 @layer base {
@@ -114,48 +116,48 @@
   width: 4px;
 }
 ::-webkit-scrollbar-track {
-  background: #0a0e1a;
+  background: #000000;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1e2a3a;
+  background: #1e3a8a;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #f5a623;
+  background: #3b82f6;
 }
 
-/* Gold gradient button */
+/* Gold gradient button - rendering as blue now */
 .btn-gold {
-  background: linear-gradient(135deg, #f5a623 0%, #d4941f 100%);
-  color: #0a0e1a;
-  font-weight: 700;
-  transition: all 0.3s ease;
-  box-shadow: 0 0 20px rgba(245, 166, 35, 0.15);
-}
-.btn-gold:hover {
-  box-shadow: 0 0 30px rgba(245, 166, 35, 0.35);
-  transform: translateY(-1px);
-}
-
-/* Green cash button */
-.btn-cash {
-  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: #ffffff;
   font-weight: 700;
   transition: all 0.3s ease;
-  box-shadow: 0 0 20px rgba(34, 197, 94, 0.15);
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+}
+.btn-gold:hover {
+  box-shadow: 0 0 30px rgba(59, 130, 246, 0.35);
+  transform: translateY(-1px);
+}
+
+/* Green cash button - rendering as blue now */
+.btn-cash {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: #ffffff;
+  font-weight: 700;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
 }
 .btn-cash:hover {
-  box-shadow: 0 0 30px rgba(34, 197, 94, 0.35);
+  box-shadow: 0 0 30px rgba(59, 130, 246, 0.35);
   transform: translateY(-1px);
 }
 
 /* Glow effects */
 .glow-gold {
-  box-shadow: 0 0 40px rgba(245, 166, 35, 0.2), 0 0 80px rgba(245, 166, 35, 0.1);
+  box-shadow: 0 0 40px rgba(59, 130, 246, 0.2), 0 0 80px rgba(59, 130, 246, 0.1);
 }
 .glow-gold-sm {
-  box-shadow: 0 0 15px rgba(245, 166, 35, 0.15);
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.15);
 }
 
 /* Coin shimmer animation */
@@ -169,8 +171,8 @@
   50% { transform: translateY(-8px); }
 }
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 20px rgba(245, 166, 35, 0.2); }
-  50% { box-shadow: 0 0 40px rgba(245, 166, 35, 0.4); }
+  0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.2); }
+  50% { box-shadow: 0 0 40px rgba(59, 130, 246, 0.4); }
 }
 .animate-shimmer {
   animation: shimmer 3s ease-in-out infinite;

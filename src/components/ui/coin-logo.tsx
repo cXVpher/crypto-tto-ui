@@ -8,25 +8,27 @@ interface CoinLogoProps {
   size?: number;
   animate?: boolean;
   className?: string;
+  glow?: boolean;
 }
 
-export function CoinLogo({ size = 120, animate = true, className }: CoinLogoProps) {
+export function CoinLogo({
+  size = 120,
+  animate = true,
+  className,
+  glow = true,
+}: CoinLogoProps) {
   const content = (
     <div className="relative flex items-center justify-center">
-      {/* Glow backdrop */}
       <div
-        className="absolute rounded-full animate-pulse-glow pointer-events-none"
+        className="relative rounded-full"
         style={{
-          width: size + 40,
-          height: size + 40,
-          top: -20,
-          left: "50%",
-          marginLeft: -(size + 40) / 2,
-          background:
-            "radial-gradient(circle, rgba(245,166,35,0.15) 0%, transparent 70%)",
+          width: size,
+          height: size,
+          filter: glow
+            ? "drop-shadow(0 0 12px rgba(245, 166, 35, 0.55)) drop-shadow(0 0 28px rgba(245, 166, 35, 0.42)) drop-shadow(0 0 44px rgba(245, 166, 35, 0.24))"
+            : undefined,
         }}
-      />
-      <div className="relative rounded-full overflow-hidden" style={{ width: size, height: size }}>
+      >
         <Image
           src="/coin-logo.png?v=7"
           alt="TitanToon Token"
