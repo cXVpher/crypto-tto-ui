@@ -6,12 +6,10 @@ import { useRouter } from "next/navigation";
 import { useWallet } from "@/lib/wallet-context";
 
 import { TopBar } from "./_components/top-bar";
-import { InfoBanner } from "./_components/info-banner";
-import { PrivateBonding } from "./_components/private-bonding";
 import { MainBalanceCard } from "./_components/main-balance-card";
 import { QuickActions } from "./_components/quick-actions";
-import { HistoryLinks } from "./_components/history-links";
-import { InviteFriend } from "./_components/invite-friend";
+import { PrivateBonding } from "./_components/private-bonding";
+import { RecentActivity } from "./_components/recent-activity";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -24,16 +22,19 @@ export default function DashboardPage() {
   if (!isConnected) return null;
 
   return (
-    <div className="flex flex-col min-h-screen pb-24">
+    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden pb-24"
+      style={{
+        background: "radial-gradient(ellipse 80% 50% at 100% 0%, #1a3a6e 0%, #0a1a3d 35%, #000e26 65%, #000510 100%)",
+        color: "#dbe5ff",
+      }}>
       <TopBar />
-      <div className="h-[57px]" aria-hidden="true" />
 
-      <InfoBanner />
-      <PrivateBonding />
-      <MainBalanceCard />
-      <QuickActions />
-      <HistoryLinks />
-      <InviteFriend />
+      <main className="flex-1 px-4">
+        <MainBalanceCard />
+        <QuickActions />
+        <PrivateBonding />
+        <RecentActivity />
+      </main>
     </div>
   );
 }

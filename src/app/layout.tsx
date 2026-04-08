@@ -1,12 +1,12 @@
 // src/app/layout.tsx
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { WalletProvider } from "@/lib/wallet-context";
 import { MobileFrame } from "@/components/layout/mobile-frame";
 import { BottomNav } from "@/components/layout/bottom-nav";
 
-const inter = Inter({
+const jakartaSans = Plus_Jakarta_Sans({
   variable: "--font-sans",
   subsets: ["latin"],
   display: "swap",
@@ -34,7 +34,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} h-full antialiased dark`}>
+    <html lang="en" className={`${jakartaSans.variable} h-full antialiased dark`}>
       <body className="min-h-full flex flex-col bg-[#050810]">
         <WalletProvider>
           <MobileFrame>
