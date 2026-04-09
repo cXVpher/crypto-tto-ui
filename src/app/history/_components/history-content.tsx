@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Clock3 } from "lucide-react";
+import { Clock } from "@phosphor-icons/react";
 import { purchaseHistory, withdrawHistory } from "@/lib/mock-data";
 import { formatBalance } from "@/lib/utils";
 
@@ -107,7 +107,7 @@ function EmptyHistoryState({ label }: { label: "purchase" | "withdraw" }) {
       className="flex flex-col items-center justify-center py-20 text-center"
     >
       <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-navy-lighter/50">
-        <Clock3 className="h-7 w-7 text-muted-foreground" />
+        <Clock className="h-7 w-7 text-muted-foreground" />
       </div>
       <p className="text-sm text-muted-foreground">No {label} history yet</p>
     </motion.div>

@@ -19,9 +19,19 @@ export function NetworkTabs({ activeTab, setActiveTab }: NetworkTabsProps) {
           onClick={() => setActiveTab(tab.key)}
           className={`flex-1 py-2.5 rounded-lg text-[10px] font-bold tracking-wider transition-all ${
             activeTab === tab.key
-              ? "bg-gold text-white"
+              ? "text-white"
               : "text-muted-foreground hover:text-foreground"
           }`}
+          style={
+            activeTab === tab.key
+              ? {
+                  background:
+                    "linear-gradient(135deg, rgba(106,178,255,0.55) 0%, rgba(59,100,220,0.75) 100%)",
+                  boxShadow:
+                    "0 4px 20px rgba(106,178,255,0.25), inset 0 1px 0 rgba(255,255,255,0.2)",
+                }
+              : undefined
+          }
         >
           {tab.label}
         </button>

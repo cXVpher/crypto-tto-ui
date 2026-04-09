@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Wallet } from "lucide-react";
+import { Wallet } from "@phosphor-icons/react";
 import { useWallet } from "@/lib/wallet-context";
 import { HeroSection } from "./_components/hero-section";
 import { FeaturesList } from "./_components/features-list";
@@ -61,6 +61,13 @@ export default function ConnectPage() {
           transition={{ delay: 0.8, duration: 0.5 }}
           onClick={handleConnect}
           className="btn-gold w-full max-w-xs py-3.5 rounded-xl text-sm font-bold tracking-wide flex items-center justify-center gap-2 animate-pulse-glow"
+          style={{
+            background:
+              "linear-gradient(135deg, rgba(106,178,255,0.55) 0%, rgba(59,100,220,0.75) 100%)",
+            boxShadow:
+              "0 4px 20px rgba(106,178,255,0.25), inset 0 1px 0 rgba(255,255,255,0.2)",
+            color: "#ffffff",
+          }}
         >
           <Wallet className="w-4 h-4" />
           Connect Wallet

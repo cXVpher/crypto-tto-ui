@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Wallet } from "lucide-react";
+import { ArrowRight, Wallet } from "@phosphor-icons/react";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { useWallet } from "@/lib/wallet-context";
 import { TOKEN_PRICE_USDT, TOKEN_SYMBOL } from "@/lib/mock-data";
@@ -146,6 +146,13 @@ export function WithdrawForm() {
         className="btn-gold w-full rounded-xl py-3.5 text-sm font-bold tracking-wide disabled:cursor-not-allowed disabled:opacity-60"
         onClick={handleSubmit}
         disabled={!isValidAmount || !hasRecipient}
+        style={{
+          background:
+            "linear-gradient(135deg, rgba(106,178,255,0.55) 0%, rgba(59,100,220,0.75) 100%)",
+          boxShadow:
+            "0 4px 20px rgba(106,178,255,0.25), inset 0 1px 0 rgba(255,255,255,0.2)",
+          color: "#ffffff",
+        }}
       >
         SUBMIT WITHDRAW
       </motion.button>

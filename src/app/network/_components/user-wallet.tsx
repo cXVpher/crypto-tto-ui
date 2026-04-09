@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Copy, Check } from "lucide-react";
+import { Check, Copy } from "@phosphor-icons/react";
 import { useWallet } from "@/lib/wallet-context";
 import { useCopyFeedback } from "@/lib/use-copy-feedback";
 import { truncateAddress } from "@/lib/utils";

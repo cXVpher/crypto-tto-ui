@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { LogOut } from "lucide-react";
+import { SignOut } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { useWallet } from "@/lib/wallet-context";
 
@@ -23,7 +23,7 @@ export function LogoutButton() {
       onClick={handleLogout}
       className="w-full mt-8 py-3.5 rounded-xl text-sm font-bold tracking-wide bg-destructive/10 border border-destructive/20 text-destructive hover:bg-destructive/20 transition-colors flex items-center justify-center gap-2"
     >
-      <LogOut className="w-4 h-4" />
+      <SignOut className="w-4 h-4" />
       LOG OUT
     </motion.button>
   );

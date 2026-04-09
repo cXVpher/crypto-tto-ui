@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Copy, Check, Shield, Calendar, Link2, UserCheck } from "lucide-react";
+import { Calendar, Check, Copy, Link, Shield, UserCheck } from "@phosphor-icons/react";
 import { useWallet } from "@/lib/wallet-context";
 import { useCopyFeedback } from "@/lib/use-copy-feedback";
 import { userProfile } from "@/lib/mock-data";
@@ -32,7 +32,7 @@ export function ProfileInfoList() {
       copyable: true,
     },
     {
-      icon: Link2,
+      icon: Link,
       label: "User Affiliate Link",
       value: `${userProfile.affiliateLink}${truncateAddress(walletAddress)}`,
       fullValue: `${userProfile.affiliateLink}${walletAddress}`,

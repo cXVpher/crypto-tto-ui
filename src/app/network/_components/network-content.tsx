@@ -1,5 +1,6 @@
 "use client";
 
+import { Handshake } from "@phosphor-icons/react";
 import { motion } from "framer-motion";
 import { networkAffiliates, TOKEN_SYMBOL } from "@/lib/mock-data";
 import { formatBalance } from "@/lib/utils";
@@ -22,11 +23,11 @@ export function NetworkContent({ activeTab }: NetworkContentProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: level.level * 0.1 }}
           >
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-[10px] font-bold text-gold bg-gold/10 px-2 py-0.5 rounded-full">
+            <div className="mb-2 flex items-center gap-2">
+              <span className="rounded-full bg-gold/10 px-2 py-0.5 text-[10px] font-bold text-gold">
                 {level.label}
               </span>
-              <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
                 Wallet Address
               </span>
             </div>
@@ -34,20 +35,20 @@ export function NetworkContent({ activeTab }: NetworkContentProps) {
               {level.wallets.map((wallet, j) => (
                 <div
                   key={j}
-                  className="bg-navy-lighter/50 border border-white/5 rounded-xl p-3"
+                  className="rounded-xl border border-white/5 bg-navy-lighter/50 p-3"
                 >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[11px] font-mono text-foreground truncate mr-2">
+                  <div className="mb-1 flex items-center justify-between">
+                    <span className="mr-2 truncate text-[11px] font-mono text-foreground">
                       {wallet.address}
                     </span>
-                    <span className="text-[10px] font-bold text-true-gold whitespace-nowrap">
+                    <span className="whitespace-nowrap text-[10px] font-bold text-true-gold">
                       {formatBalance(wallet.bonding)} {TOKEN_SYMBOL}
                     </span>
                   </div>
                   <p className="text-[9px] text-muted-foreground">
                     Invite Date: {wallet.inviteDate}
                   </p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                  <p className="mt-0.5 text-[10px] text-muted-foreground">
                     BONDING
                   </p>
                 </div>
@@ -65,12 +66,10 @@ export function NetworkContent({ activeTab }: NetworkContentProps) {
       animate={{ opacity: 1 }}
       className="flex flex-col items-center justify-center py-20 text-center"
     >
-      <div className="w-16 h-16 rounded-full bg-navy-lighter/50 flex items-center justify-center mb-4">
-        <span className="text-2xl">🤝</span>
+      <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-navy-lighter/50">
+        <Handshake className="h-7 w-7 text-muted-foreground" />
       </div>
-      <p className="text-sm text-muted-foreground">
-        No Matching History
-      </p>
+      <p className="text-sm text-muted-foreground">No Matching History</p>
     </motion.div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowDownUp } from "lucide-react";
+import { ArrowsDownUp } from "@phosphor-icons/react";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { useWallet } from "@/lib/wallet-context";
 import { TOKEN_SYMBOL, TOKEN_PRICE_USDT } from "@/lib/mock-data";
@@ -67,7 +67,7 @@ export function SwapForm() {
 
       <div className="flex justify-center">
         <div className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-navy-lighter">
-          <ArrowDownUp className="h-4 w-4 text-gold" />
+          <ArrowsDownUp className="h-4 w-4 text-gold" />
         </div>
       </div>
 
@@ -119,6 +119,13 @@ export function SwapForm() {
         className="btn-cash mt-2 w-full rounded-xl py-3.5 text-sm font-bold tracking-wide disabled:cursor-not-allowed disabled:opacity-60"
         onClick={handleSubmit}
         disabled={!isValidAmount}
+        style={{
+          background:
+            "linear-gradient(135deg, rgba(106,178,255,0.55) 0%, rgba(59,100,220,0.75) 100%)",
+          boxShadow:
+            "0 4px 20px rgba(106,178,255,0.25), inset 0 1px 0 rgba(255,255,255,0.2)",
+          color: "#ffffff",
+        }}
       >
         SWAP
       </motion.button>

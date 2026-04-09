@@ -1,13 +1,13 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Flame, Droplets, Zap } from "lucide-react";
+import { Drop, Fire, Lightning } from "@phosphor-icons/react";
 
 export function FeaturesList() {
   const features = [
-    { icon: Flame, label: "Staking", color: "text-orange-400" },
-    { icon: Droplets, label: "Pooling", color: "text-blue-400" },
-    { icon: Zap, label: "Burning", color: "text-red-400" },
+    { icon: Fire, label: "Staking", color: "text-orange-400" },
+    { icon: Drop, label: "Pooling", color: "text-blue-400" },
+    { icon: Lightning, label: "Burning", color: "text-red-400" },
   ];
 
   return (

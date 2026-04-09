@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { Plus, Flame } from "lucide-react";
+import { Fire, Plus } from "@phosphor-icons/react";
 import { bondingPackages } from "@/lib/mock-data";
 
 export function BondingPackageList() {
@@ -24,7 +24,7 @@ export function BondingPackageList() {
           >
             {/* Icon */}
             <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0">
-              <Flame className="w-5 h-5 text-orange-400" />
+              <Fire className="w-5 h-5 text-orange-400" />
             </div>
 
             {/* Info */}

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ClipboardList } from "lucide-react";
+import { ClipboardText } from "@phosphor-icons/react";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { myBondingList } from "@/lib/mock-data";
 import { formatBalance } from "@/lib/utils";
@@ -11,7 +11,7 @@ export function MyBondingList() {
     <div className="px-4 pt-6">
       <div className="mb-3 flex items-center gap-2">
         <div className="flex h-4 w-4 items-center justify-center rounded bg-gold/20">
-          <ClipboardList className="h-3 w-3 text-gold" />
+          <ClipboardText className="h-3 w-3 text-gold" />
         </div>
         <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
           My Bonding List

@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { useWallet } from "@/lib/wallet-context";
 import { formatBalance } from "@/lib/utils";
 import { TOKEN_SYMBOL } from "@/lib/mock-data";
-import { TrendingUp } from "lucide-react";
+import { TrendUp } from "@phosphor-icons/react";
 
 export function MainBalanceCard() {
   const { balance } = useWallet();
@@ -51,7 +51,7 @@ export function MainBalanceCard() {
 
         {/* Trend */}
         <div className="flex items-center gap-1.5 text-sm font-medium" style={{ color: "#4ade80" }}>
-          <TrendingUp className="w-4 h-4" />
+          <TrendUp className="w-4 h-4" />
           <span>+4.2% today</span>
         </div>
       </div>

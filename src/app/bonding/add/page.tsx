@@ -3,7 +3,7 @@
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { Flame } from "lucide-react";
+import { Fire } from "@phosphor-icons/react";
 import { PageHeader } from "@/components/layout/page-header";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { bondingPackages, TOKEN_SYMBOL } from "@/lib/mock-data";
@@ -60,7 +60,7 @@ function AddBondingForm() {
           className="mb-6 flex items-center gap-4 rounded-xl border border-white/5 bg-navy-lighter/50 p-4"
         >
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-500/10">
-            <Flame className="h-5 w-5 text-orange-400" />
+            <Fire className="h-5 w-5 text-orange-400" />
           </div>
           <div>
             <p className="text-sm font-bold text-foreground">{pkg.name}</p>
@@ -151,6 +151,13 @@ function AddBondingForm() {
           className="btn-gold mt-4 w-full rounded-xl py-3.5 text-sm font-bold tracking-wide disabled:cursor-not-allowed disabled:opacity-60"
           onClick={handleSubmit}
           disabled={!isValidAmount}
+          style={{
+            background:
+              "linear-gradient(135deg, rgba(106,178,255,0.55) 0%, rgba(59,100,220,0.75) 100%)",
+            boxShadow:
+              "0 4px 20px rgba(106,178,255,0.25), inset 0 1px 0 rgba(255,255,255,0.2)",
+            color: "#ffffff",
+          }}
         >
           Create Contract
         </motion.button>

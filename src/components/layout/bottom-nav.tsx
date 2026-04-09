@@ -3,14 +3,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Layers, ArrowLeftRight, Network, User } from "lucide-react";
+import { ArrowsLeftRight, House, Network, Stack, User } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { useWallet } from "@/lib/wallet-context";
 
 const navItems = [
-  { href: "/dashboard", label: "Home", icon: Home },
-  { href: "/bonding", label: "Bonding", icon: Layers },
-  { href: "/swap", label: "Swap", icon: ArrowLeftRight },
+  { href: "/dashboard", label: "Home", icon: House },
+  { href: "/bonding", label: "Bonding", icon: Stack },
+  { href: "/swap", label: "Swap", icon: ArrowsLeftRight },
   { href: "/network", label: "Network", icon: Network },
   { href: "/profile", label: "Profile", icon: User },
 ];

@@ -6,11 +6,11 @@ import { useWallet } from "@/lib/wallet-context";
 import { truncateAddress } from "@/lib/utils";
 import { TOKEN_SYMBOL } from "@/lib/mock-data";
 import {
-  UserPlus,
   ArrowDownLeft,
   ArrowUpRight,
-  ChevronRight,
-} from "lucide-react";
+  CaretRight,
+  UserPlus,
+} from "@phosphor-icons/react";
 
 const items = [
   {
@@ -98,7 +98,7 @@ export function RecentActivity() {
               </p>
             </div>
           </div>
-          <ChevronRight className="w-5 h-5 shrink-0" style={{ color: "#98abd4" }} />
+          <CaretRight className="w-5 h-5 shrink-0" style={{ color: "#98abd4" }} />
         </motion.button>
 
         {/* Received */}

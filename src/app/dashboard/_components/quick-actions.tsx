@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { ArrowDown, ArrowUp } from "lucide-react";
+import { ArrowDown, ArrowUp } from "@phosphor-icons/react";
 
 export function QuickActions() {
   const router = useRouter();
@@ -24,11 +24,13 @@ export function QuickActions() {
       </button>
       <button
         onClick={() => router.push("/withdraw")}
-        className="flex h-14 items-center justify-center gap-2 rounded-xl font-bold text-sm transition-all active:scale-95"
+        className="flex h-14 items-center justify-center gap-2 rounded-xl border font-bold text-sm transition-all active:scale-95"
         style={{
-          background: "rgba(255,255,255,0.06)",
+          background: "rgba(255,255,255,0.05)",
           backdropFilter: "blur(20px)",
           WebkitBackdropFilter: "blur(20px)",
+          borderColor: "rgba(255,255,255,0.12)",
+          boxShadow: "0 10px 30px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.14)",
           color: "#dbe5ff",
         }}
       >

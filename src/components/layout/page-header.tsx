@@ -2,7 +2,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
+import { CaretLeft } from "@phosphor-icons/react";
 
 interface PageHeaderProps {
   title: string;
@@ -27,14 +27,14 @@ export function PageHeader({ title, showBack = true, rightAction }: PageHeaderPr
   return (
     <>
       <header className="fixed inset-x-0 top-0 z-50">
-        <div className="mx-auto flex w-full max-w-[430px] items-center justify-between border-b border-white/5 bg-navy/90 px-4 py-3 backdrop-blur-lg">
+        <div className="mx-auto flex w-full max-w-[430px] items-center justify-between border-b border-white/8 bg-[#031123]/35 px-4 py-3 backdrop-blur-xl">
           <div className="flex items-center gap-2 min-w-[40px]">
             {showBack && (
               <button
                 onClick={() => router.push(getBackTarget())}
                 className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 transition-colors"
               >
-                <ChevronLeft className="w-5 h-5 text-gold" />
+                <CaretLeft className="w-5 h-5 text-gold" />
               </button>
             )}
           </div>

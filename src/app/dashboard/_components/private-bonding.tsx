@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { formatBalance } from "@/lib/utils";
 import { TOKEN_SYMBOL } from "@/lib/mock-data";
 import { useWallet } from "@/lib/wallet-context";
-import { Lock, ChevronRight } from "lucide-react";
+import { Lock } from "@phosphor-icons/react";
 
 export function PrivateBonding() {
   const router = useRouter();

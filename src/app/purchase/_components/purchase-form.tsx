@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Gift, Layers } from "lucide-react";
+import { Gift, Stack } from "@phosphor-icons/react";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { TOKEN_SYMBOL, TOKEN_PRICE_USDT } from "@/lib/mock-data";
 import { formatBalance } from "@/lib/utils";
@@ -77,7 +77,7 @@ export function PurchaseForm() {
       <div className="grid grid-cols-2 gap-3 pt-2">
         <div className="rounded-xl border border-white/5 bg-navy-lighter/40 p-3">
           <div className="mb-2 flex items-center gap-1.5">
-            <Layers className="h-4 w-4 text-gold" />
+            <Stack className="h-4 w-4 text-gold" />
             <span className="text-[11px] font-bold text-true-gold">
               {TOKEN_SYMBOL}
             </span>
@@ -120,6 +120,13 @@ export function PurchaseForm() {
         className="btn-gold mt-4 w-full rounded-xl py-3.5 text-sm font-bold tracking-wide disabled:cursor-not-allowed disabled:opacity-60"
         onClick={handleSubmit}
         disabled={!isValidAmount}
+        style={{
+          background:
+            "linear-gradient(135deg, rgba(106,178,255,0.55) 0%, rgba(59,100,220,0.75) 100%)",
+          boxShadow:
+            "0 4px 20px rgba(106,178,255,0.25), inset 0 1px 0 rgba(255,255,255,0.2)",
+          color: "#ffffff",
+        }}
       >
         DEPOSIT
       </motion.button>

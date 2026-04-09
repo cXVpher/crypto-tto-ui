@@ -1,26 +1,26 @@
 # Change Log
 
 ## feat
-- Added a frontend-only `/withdraw` page and withdraw form.
-- Wired the dashboard `WITHDRAW` action to navigate to `/withdraw`.
-- Added inline submit confirmation states for purchase, swap, bonding add, and withdraw flows.
-- Added a reusable `FormFeedback` component for info, error, and success messages.
-- Updated the withdraw flow to preview USD payout instead of returning `TTO` again.
+- Added a dashboard-style radial gradient background to the `Bonding`, `Swap`, `Network`, and `Profile` pages, with the highlight shifted to the left side.
 
 ## fix
-- Removed placeholder `alert()` submit behavior from purchase, swap, and bonding add flows.
-- Replaced the dead dashboard withdraw button handler with a real route.
-- Added validation for invalid, minimum, and over-balance inputs in the updated forms.
-- Fixed withdraw calculations so `Network Fee` is shown in USD and deducted from the final USD receive amount.
-- Updated shared back-button behavior so top-level pages return to `/dashboard` and nested pages return to their parent route.
+- Removed the duplicate `src/app/icon.png` app icon route and kept the existing public icon asset path through metadata.
+- Replaced the remaining emoji in `Network > Matching History` with a Phosphor icon.
 
 ## refactor
-- Refactored wallet persistence in `wallet-context.tsx` to use a storage-backed `useSyncExternalStore` pattern.
-- Unified inline form status messaging through the shared `FormFeedback` component.
-- Simplified the updated form flows so all submit states are handled in-component instead of with browser alerts.
+- Migrated all app icons from `lucide-react` to `@phosphor-icons/react`.
+- Removed the dashboard search button from the top bar.
+
+## docs
 
 ## style
-- Replaced purchase distribution emoji usage with Lucide icons.
-- Improved the visual presentation of purchase, swap, bonding add, and withdraw feedback states for consistency.
-- Changed the browser tab icon to use the coin logo via `src/app/icon.png`.
-- Renamed user-facing purchase labels to deposit across the dashboard, deposit page, form, and history tab.
+- Updated the `Connect Wallet`, `Deposit`, `Swap`, `Submit Withdraw`, and `Create Contract` primary action buttons to use the same blue gradient/glow as the dashboard `Deposit` button.
+- Updated the shared page header and dashboard top bar to use a translucent blurred background so page gradients remain visible while the header stays fixed on scroll.
+- Adjusted the dashboard `Withdraw` quick action button to use a more glass-like appearance.
+- Updated the active `Network` tab color to match the dashboard `Deposit` button styling.
+
+## chore
+
+## test
+
+## perf

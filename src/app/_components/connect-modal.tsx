@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, CheckCircle2, Wallet } from "lucide-react";
+import { CheckCircle, SpinnerGap, Wallet } from "@phosphor-icons/react";
 
 type ModalStep = "idle" | "connecting" | "approving" | "success";
 
@@ -32,7 +32,7 @@ export function ConnectModal({ modalOpen, step }: ConnectModalProps) {
               {step === "connecting" && (
                 <>
                   <div className="w-16 h-16 rounded-full bg-gold/10 flex items-center justify-center">
-                    <Loader2 className="w-8 h-8 text-gold animate-spin" />
+                    <SpinnerGap className="w-8 h-8 text-gold animate-spin" />
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-foreground mb-1">
@@ -72,7 +72,7 @@ export function ConnectModal({ modalOpen, step }: ConnectModalProps) {
                       Please approve the connection in your wallet
                     </p>
                   </div>
-                  <Loader2 className="w-5 h-5 text-gold/60 animate-spin mt-2" />
+                  <SpinnerGap className="w-5 h-5 text-gold/60 animate-spin mt-2" />
                 </>
               )}
 
@@ -84,7 +84,7 @@ export function ConnectModal({ modalOpen, step }: ConnectModalProps) {
                     transition={{ type: "spring", stiffness: 300 }}
                     className="w-16 h-16 rounded-full bg-cash/10 flex items-center justify-center"
                   >
-                    <CheckCircle2 className="w-8 h-8 text-cash" />
+                    <CheckCircle className="w-8 h-8 text-cash" />
                   </motion.div>
                   <div>
                     <p className="text-sm font-semibold text-foreground mb-1">
