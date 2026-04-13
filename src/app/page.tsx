@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Wallet } from "@phosphor-icons/react";
-import { useWallet } from "@/lib/wallet-context";
+import { useWalletStore } from "@/store/use-wallet-store";
 import { HeroSection } from "./_components/hero-section";
 import { FeaturesList } from "./_components/features-list";
 import { ConnectModal } from "./_components/connect-modal";
@@ -14,18 +14,20 @@ type ModalStep = "idle" | "connecting" | "approving" | "success";
 
 export default function ConnectPage() {
   const router = useRouter();
-  const { isConnected, connect } = useWallet();
+  const hasHydrated = useWalletStore((state) => state.hasHydrated);
+  const isConnected = useWalletStore((state) => state.isConnected);
+  const connectWallet = useWalletStore((state) => state.connectWallet);
   const [modalOpen, setModalOpen] = useState(false);
   const [step, setStep] = useState<ModalStep>("idle");
 
   // If already connected, redirect
   useEffect(() => {
-    if (isConnected) {
+    if (hasHydrated && isConnected) {
       router.replace("/dashboard");
     }
-  }, [isConnected, router]);
+  }, [hasHydrated, isConnected, router]);
 
-  if (isConnected) {
+  if (!hasHydrated || isConnected) {
     return null;
   }
 
@@ -38,7 +40,7 @@ export default function ConnectPage() {
     setStep("approving");
 
     // Simulate approval + actual connect
-    await connect();
+    await connectWallet();
     setStep("success");
 
     // Redirect after brief success state

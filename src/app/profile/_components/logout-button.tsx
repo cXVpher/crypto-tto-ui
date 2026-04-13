@@ -3,14 +3,14 @@
 import { motion } from "framer-motion";
 import { SignOut } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
-import { useWallet } from "@/lib/wallet-context";
+import { useWalletStore } from "@/store/use-wallet-store";
 
 export function LogoutButton() {
   const router = useRouter();
-  const { disconnect } = useWallet();
+  const disconnectWallet = useWalletStore((state) => state.disconnectWallet);
 
   const handleLogout = () => {
-    disconnect();
+    disconnectWallet();
     router.replace("/");
   };
 
@@ -21,7 +21,12 @@ export function LogoutButton() {
       transition={{ delay: 0.5 }}
       whileTap={{ scale: 0.98 }}
       onClick={handleLogout}
-      className="w-full mt-8 py-3.5 rounded-xl text-sm font-bold tracking-wide bg-destructive/10 border border-destructive/20 text-destructive hover:bg-destructive/20 transition-colors flex items-center justify-center gap-2"
+      className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl border py-3.5 text-sm font-bold tracking-wide transition-colors"
+      style={{
+        background: "rgba(248,113,113,0.1)",
+        borderColor: "rgba(248,113,113,0.2)",
+        color: "#f87171",
+      }}
     >
       <SignOut className="w-4 h-4" />
       LOG OUT

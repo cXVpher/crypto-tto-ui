@@ -1,13 +1,13 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useWallet } from "@/lib/wallet-context";
 import { formatBalance } from "@/lib/utils";
 import { TOKEN_SYMBOL } from "@/lib/mock-data";
 import { TrendUp } from "@phosphor-icons/react";
+import { useWalletStore } from "@/store/use-wallet-store";
 
 export function MainBalanceCard() {
-  const { balance } = useWallet();
+  const balance = useWalletStore((state) => state.balance);
 
   return (
     <motion.div

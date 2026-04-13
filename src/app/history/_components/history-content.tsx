@@ -1,115 +1,212 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { Clock } from "@phosphor-icons/react";
-import { purchaseHistory, withdrawHistory } from "@/lib/mock-data";
+import type { PurchaseHistoryItem, WithdrawHistoryItem } from "@/lib/api-service";
 import { formatBalance } from "@/lib/utils";
 
 interface HistoryContentProps {
   activeTab: "purchase" | "withdraw";
+  direction: 1 | -1;
+  purchaseHistory: PurchaseHistoryItem[];
+  withdrawHistory: WithdrawHistoryItem[];
 }
 
-export function HistoryContent({ activeTab }: HistoryContentProps) {
-  if (activeTab === "purchase") {
-    return (
-      <div className="px-4 pt-4">
-        {purchaseHistory.length > 0 ? (
-          <div className="space-y-3">
-            {purchaseHistory.map((item, i) => (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.08 }}
-                className="bg-navy-lighter/50 border border-white/5 rounded-xl p-4"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold text-true-gold">
-                    {formatBalance(item.amount)} {item.token}
-                  </span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-cash/10 text-cash border border-cash/20 font-bold">
-                    {item.status}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-[11px] text-muted-foreground">
-                    Received:{" "}
-                    <span className="text-true-gold font-semibold">
-                      {formatBalance(item.received)} {item.receivedToken}
-                    </span>
-                  </span>
-                  <span className="text-[10px] text-muted-foreground">
-                    {item.date}
-                  </span>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        ) : (
-          <EmptyHistoryState label="purchase" />
-        )}
-      </div>
-    );
-  }
+const slideVariants = {
+  enter: (direction: 1 | -1) => ({
+    x: direction > 0 ? "100%" : "-100%",
+    opacity: 1,
+  }),
+  center: {
+    x: 0,
+    opacity: 1,
+  },
+  exit: (direction: 1 | -1) => ({
+    x: direction > 0 ? "-100%" : "100%",
+    opacity: 1,
+  }),
+};
 
+function PurchasePanel({ purchaseHistory }: { purchaseHistory: PurchaseHistoryItem[] }) {
   return (
-    <div className="px-4 pt-4">
-      {withdrawHistory.length > 0 ? (
-        <div className="space-y-3">
-          {withdrawHistory.map((item, i) => (
-            <motion.div
-              key={item.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.08 }}
-              className="bg-navy-lighter/50 border border-white/5 rounded-xl p-4"
+    <div className="space-y-3">
+      {purchaseHistory.map((item) => (
+        <div
+          key={item.id}
+          className="rounded-xl border p-4"
+          style={{
+            background: "rgba(255,255,255,0.075)",
+            borderColor: "rgba(126,194,255,0.09)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+            boxShadow: "0 10px 30px rgba(5, 12, 28, 0.16)",
+          }}
+        >
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-xs font-bold" style={{ color: "#f5c451" }}>
+              {formatBalance(item.amount)} {item.token}
+            </span>
+            <span
+              className="rounded-full border px-2 py-0.5 text-[10px] font-bold"
+              style={{
+                background: "rgba(74,222,128,0.12)",
+                color: "#4ade80",
+                borderColor: "rgba(74,222,128,0.2)",
+              }}
             >
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-true-gold">
-                  {formatBalance(item.amount)} {item.token}
-                </span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-cash/10 text-cash border border-cash/20 font-bold">
-                  {item.status}
-                </span>
-              </div>
-              <div className="space-y-1.5">
-                <span className="block text-[11px] text-muted-foreground">
-                  Wallet:{" "}
-                  <span className="text-true-gold font-semibold">
-                    {item.wallet}
-                  </span>
-                </span>
-                <div className="flex items-center justify-between gap-3 text-[10px] text-muted-foreground">
-                  <span>
-                    Fee:{" "}
-                    <span className="text-foreground">
-                      {formatBalance(item.fee)} {item.token}
-                    </span>
-                  </span>
-                  <span>{item.date}</span>
-                </div>
-              </div>
-            </motion.div>
-          ))}
+              {item.status}
+            </span>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-[11px]" style={{ color: "#98abd4" }}>
+              Received:{" "}
+              <span className="font-semibold" style={{ color: "#f5c451" }}>
+                {formatBalance(item.received)} {item.receivedToken}
+              </span>
+            </span>
+            <span className="text-[10px]" style={{ color: "#98abd4" }}>
+              {item.date}
+            </span>
+          </div>
         </div>
-      ) : (
-        <EmptyHistoryState label="withdraw" />
-      )}
+      ))}
+    </div>
+  );
+}
+
+function WithdrawPanel({ withdrawHistory }: { withdrawHistory: WithdrawHistoryItem[] }) {
+  return (
+    <div className="space-y-3">
+      {withdrawHistory.map((item) => (
+        <div
+          key={item.id}
+          className="rounded-xl border p-4"
+          style={{
+            background: "rgba(255,255,255,0.075)",
+            borderColor: "rgba(126,194,255,0.09)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+            boxShadow: "0 10px 30px rgba(5, 12, 28, 0.16)",
+          }}
+        >
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-xs font-bold" style={{ color: "#f5c451" }}>
+              {formatBalance(item.amount)} {item.token}
+            </span>
+            <span
+              className="rounded-full border px-2 py-0.5 text-[10px] font-bold"
+              style={{
+                background: "rgba(74,222,128,0.12)",
+                color: "#4ade80",
+                borderColor: "rgba(74,222,128,0.2)",
+              }}
+            >
+              {item.status}
+            </span>
+          </div>
+          <div className="space-y-1.5">
+            <span className="block text-[11px]" style={{ color: "#98abd4" }}>
+              Wallet:{" "}
+              <span className="font-semibold" style={{ color: "#f5c451" }}>
+                {item.wallet}
+              </span>
+            </span>
+            <div
+              className="flex items-center justify-between gap-3 text-[10px]"
+              style={{ color: "#98abd4" }}
+            >
+              <span>
+                Fee:{" "}
+                <span style={{ color: "#dbe5ff" }}>
+                  {formatBalance(item.fee)} {item.token}
+                </span>
+              </span>
+              <span>{item.date}</span>
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
 
 function EmptyHistoryState({ label }: { label: "purchase" | "withdraw" }) {
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="flex flex-col items-center justify-center py-20 text-center"
-    >
-      <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-navy-lighter/50">
-        <Clock className="h-7 w-7 text-muted-foreground" />
+    <div className="flex flex-col items-center justify-center py-20 text-center">
+      <div
+        className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border"
+        style={{
+          background: "rgba(255,255,255,0.075)",
+          borderColor: "rgba(126,194,255,0.09)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+        }}
+      >
+        <Clock className="h-7 w-7" style={{ color: "#86cbff" }} />
       </div>
-      <p className="text-sm text-muted-foreground">No {label} history yet</p>
-    </motion.div>
+      <p className="text-sm" style={{ color: "#98abd4" }}>
+        No {label} history yet
+      </p>
+    </div>
+  );
+}
+
+export function HistoryContent({
+  activeTab,
+  direction,
+  purchaseHistory,
+  withdrawHistory,
+}: HistoryContentProps) {
+  const isPurchase = activeTab === "purchase";
+  const hasHistory = isPurchase ? purchaseHistory.length > 0 : withdrawHistory.length > 0;
+
+  return (
+    <div className="px-4 pt-4">
+      <div className="relative overflow-x-hidden">
+        <AnimatePresence initial={false} mode="sync" custom={direction}>
+          <motion.div
+            key={activeTab}
+            custom={direction}
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{
+              x: {
+                duration: 0.28,
+                ease: [0.22, 1, 0.36, 1],
+              },
+              opacity: {
+                duration: 0.18,
+                ease: "linear",
+              },
+            }}
+            className="absolute inset-0 w-full will-change-transform"
+          >
+            {hasHistory ? (
+              isPurchase ? (
+                <PurchasePanel purchaseHistory={purchaseHistory} />
+              ) : (
+                <WithdrawPanel withdrawHistory={withdrawHistory} />
+              )
+            ) : (
+              <EmptyHistoryState label={activeTab} />
+            )}
+          </motion.div>
+        </AnimatePresence>
+
+        <div className="pointer-events-none opacity-0" aria-hidden="true">
+          {hasHistory ? (
+            isPurchase ? (
+              <PurchasePanel purchaseHistory={purchaseHistory} />
+            ) : (
+              <WithdrawPanel withdrawHistory={withdrawHistory} />
+            )
+          ) : (
+            <EmptyHistoryState label={activeTab} />
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

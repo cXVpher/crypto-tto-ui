@@ -71,6 +71,7 @@ export const myBondingList = [
 export const networkAffiliates = [
   {
     level: 1,
+
     label: "LV-01",
     wallets: [
       {

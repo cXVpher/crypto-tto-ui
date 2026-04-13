@@ -2,7 +2,6 @@
 
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { useWallet } from "@/lib/wallet-context";
 import { truncateAddress } from "@/lib/utils";
 import { TOKEN_SYMBOL } from "@/lib/mock-data";
 import {
@@ -11,45 +10,11 @@ import {
   CaretRight,
   UserPlus,
 } from "@phosphor-icons/react";
-
-const items = [
-  {
-    id: "invite",
-    icon: UserPlus,
-    iconBg: "rgba(99,158,253,0.2)",
-    iconColor: "#639efd",
-    title: "Invite Your Friend",
-    subtitle: null,
-    isInvite: true,
-    rightLabel: null,
-  },
-  {
-    id: "received",
-    icon: ArrowDownLeft,
-    iconBg: "rgba(74,222,128,0.15)",
-    iconColor: "#4ade80",
-    title: "Received Payment",
-    subtitle: "From: 0x4f...92e1",
-    amount: "+120.00",
-    amountColor: "#4ade80",
-    time: "2 hours ago",
-  },
-  {
-    id: "swap",
-    icon: ArrowUpRight,
-    iconBg: "rgba(248,113,113,0.15)",
-    iconColor: "#f87171",
-    title: "Asset Swap",
-    subtitle: `TTO to USD`,
-    amount: "-45.50",
-    amountColor: "#dbe5ff",
-    time: "Yesterday",
-  },
-];
+import { useWalletStore } from "@/store/use-wallet-store";
 
 export function RecentActivity() {
   const router = useRouter();
-  const { walletAddress } = useWallet();
+  const walletAddress = useWalletStore((state) => state.walletAddress);
 
   return (
     <section className="mb-4">

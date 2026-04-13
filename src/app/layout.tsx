@@ -2,9 +2,10 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
-import { WalletProvider } from "@/lib/wallet-context";
 import { MobileFrame } from "@/components/layout/mobile-frame";
 import { BottomNav } from "@/components/layout/bottom-nav";
+import { PageTransition } from "@/components/layout/page-transition";
+import { NavigationTransitionProvider } from "@/components/layout/navigation-transition-context";
 
 const jakartaSans = Plus_Jakarta_Sans({
   variable: "--font-sans",
@@ -36,12 +37,13 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${jakartaSans.variable} h-full antialiased dark`}>
       <body className="min-h-full flex flex-col bg-[#050810]">
-        <WalletProvider>
+        <NavigationTransitionProvider>
           <MobileFrame>
-            {children}
+            <div id="page-header-root" />
+            <PageTransition>{children}</PageTransition>
             <BottomNav />
           </MobileFrame>
-        </WalletProvider>
+        </NavigationTransitionProvider>
       </body>
     </html>
   );

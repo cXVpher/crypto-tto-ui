@@ -1,19 +1,17 @@
-// src/app/history/page.tsx
-"use client";
+import { getHistoryData } from "@/lib/api-service";
+import { getServerAccessToken } from "@/lib/server-auth";
+import { HistoryPageClient } from "./_components/history-page-client";
 
-import { useState } from "react";
-import { PageHeader } from "@/components/layout/page-header";
-import { HistoryTabs } from "./_components/history-tabs";
-import { HistoryContent } from "./_components/history-content";
-
-export default function HistoryPage() {
-  const [activeTab, setActiveTab] = useState<"purchase" | "withdraw">("purchase");
+export default async function HistoryPage() {
+  const accessToken = await getServerAccessToken();
+  const historyData = accessToken
+    ? await getHistoryData({ accessToken })
+    : { purchaseHistory: [], withdrawHistory: [] };
 
   return (
-    <div className="flex flex-col min-h-screen pb-24">
-      <PageHeader title="History" />
-      <HistoryTabs activeTab={activeTab} setActiveTab={setActiveTab} />
-      <HistoryContent activeTab={activeTab} />
-    </div>
+    <HistoryPageClient
+      purchaseHistory={historyData.purchaseHistory}
+      withdrawHistory={historyData.withdrawHistory}
+    />
   );
 }

@@ -3,29 +3,25 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowsLeftRight, House, Network, Stack, User } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
-import { useWallet } from "@/lib/wallet-context";
-
-const navItems = [
-  { href: "/dashboard", label: "Home", icon: House },
-  { href: "/bonding", label: "Bonding", icon: Stack },
-  { href: "/swap", label: "Swap", icon: ArrowsLeftRight },
-  { href: "/network", label: "Network", icon: Network },
-  { href: "/profile", label: "Profile", icon: User },
-];
+import { useWalletStore } from "@/store/use-wallet-store";
+import { bottomNavItems } from "./bottom-nav-config";
+import { useNavigationTransition } from "./navigation-transition-context";
 
 export function BottomNav() {
   const pathname = usePathname();
-  const { isConnected } = useWallet();
+  const shouldShowNav = useWalletStore(
+    (state) => state.hasHydrated && state.isConnected
+  );
+  const { setRouteTransition } = useNavigationTransition();
 
-  if (!isConnected) return null;
+  if (!shouldShowNav) return null;
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-50">
       <div className="mx-auto w-full max-w-[430px] bg-navy-light/95 backdrop-blur-xl border-t border-white/5">
         <div className="flex items-center gap-2 px-2 py-2">
-          {navItems.map((item) => {
+          {bottomNavItems.map((item) => {
             const isActive =
               pathname === item.href || pathname.startsWith(item.href + "/");
 
@@ -35,6 +31,7 @@ export function BottomNav() {
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={() => setRouteTransition(pathname, item.href)}
                 className={cn(
                   "flex flex-1 min-w-0 h-[50px] flex-col items-center justify-center gap-1 rounded-full border transition-all duration-200",
                   isActive

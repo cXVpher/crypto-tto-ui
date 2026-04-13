@@ -3,7 +3,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useWallet } from "@/lib/wallet-context";
+import { useWalletStore } from "@/store/use-wallet-store";
 
 import { TopBar } from "./_components/top-bar";
 import { MainBalanceCard } from "./_components/main-balance-card";
@@ -13,13 +13,16 @@ import { RecentActivity } from "./_components/recent-activity";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { isConnected } = useWallet();
+  const hasHydrated = useWalletStore((state) => state.hasHydrated);
+  const isConnected = useWalletStore((state) => state.isConnected);
 
   useEffect(() => {
-    if (!isConnected) router.replace("/");
-  }, [isConnected, router]);
+    if (hasHydrated && !isConnected) {
+      router.replace("/");
+    }
+  }, [hasHydrated, isConnected, router]);
 
-  if (!isConnected) return null;
+  if (!hasHydrated || !isConnected) return null;
 
   return (
     <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden pb-24"

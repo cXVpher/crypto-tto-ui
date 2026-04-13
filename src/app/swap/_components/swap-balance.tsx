@@ -1,30 +1,39 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useWallet } from "@/lib/wallet-context";
 import { TOKEN_SYMBOL, TOKEN_PRICE_USDT } from "@/lib/mock-data";
 import { formatBalance } from "@/lib/utils";
+import { useWalletStore } from "@/store/use-wallet-store";
 
 export function SwapBalance() {
-  const { balance } = useWallet();
+  const balance = useWalletStore((state) => state.balance);
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="bg-navy-lighter/50 border border-white/5 rounded-xl p-4 mb-6"
+      className="mb-6 rounded-xl border p-4"
+      style={{
+        background: "rgba(255,255,255,0.075)",
+        borderColor: "rgba(126,194,255,0.09)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        boxShadow: "0 10px 30px rgba(5, 12, 28, 0.16)",
+      }}
     >
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
+          <p className="text-[10px] uppercase tracking-wider" style={{ color: "#98abd4" }}>
             Account Balance
           </p>
-          <p className="text-lg font-bold text-true-gold">
+          <p className="text-lg font-bold" style={{ color: "#f5c451" }}>
             {formatBalance(balance)}{" "}
-            <span className="text-true-gold text-sm">{TOKEN_SYMBOL}</span>
+            <span className="text-sm" style={{ color: "#f5c451" }}>
+              {TOKEN_SYMBOL}
+            </span>
           </p>
         </div>
-        <p className="text-xs text-true-gold font-semibold">
+        <p className="text-xs font-semibold" style={{ color: "#f5c451" }}>
           ~${formatBalance(balance * TOKEN_PRICE_USDT)}
         </p>
       </div>

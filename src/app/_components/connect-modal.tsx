@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle, SpinnerGap, Wallet } from "@phosphor-icons/react";
+import { useWalletStore } from "@/store/use-wallet-store";
 
 type ModalStep = "idle" | "connecting" | "approving" | "success";
 
@@ -11,6 +12,12 @@ interface ConnectModalProps {
 }
 
 export function ConnectModal({ modalOpen, step }: ConnectModalProps) {
+  const isConnected = useWalletStore((state) => state.isConnected);
+  const resolvedStep =
+    isConnected && step !== "idle"
+      ? "success"
+      : step;
+
   return (
     <AnimatePresence>
       {modalOpen && (
@@ -29,7 +36,7 @@ export function ConnectModal({ modalOpen, step }: ConnectModalProps) {
           >
             {/* Steps */}
             <div className="flex flex-col items-center gap-5">
-              {step === "connecting" && (
+              {resolvedStep === "connecting" && (
                 <>
                   <div className="w-16 h-16 rounded-full bg-gold/10 flex items-center justify-center">
                     <SpinnerGap className="w-8 h-8 text-gold animate-spin" />
@@ -59,7 +66,7 @@ export function ConnectModal({ modalOpen, step }: ConnectModalProps) {
                 </>
               )}
 
-              {step === "approving" && (
+              {resolvedStep === "approving" && (
                 <>
                   <div className="w-16 h-16 rounded-full bg-gold/10 flex items-center justify-center animate-pulse-glow">
                     <Wallet className="w-8 h-8 text-gold" />
@@ -76,7 +83,7 @@ export function ConnectModal({ modalOpen, step }: ConnectModalProps) {
                 </>
               )}
 
-              {step === "success" && (
+              {resolvedStep === "success" && (
                 <>
                   <motion.div
                     initial={{ scale: 0 }}
@@ -90,9 +97,12 @@ export function ConnectModal({ modalOpen, step }: ConnectModalProps) {
                     <p className="text-sm font-semibold text-foreground mb-1">
                       Connected!
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      Redirecting to dashboard...
-                    </p>
+                    <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                      <span className="h-2 w-2 rounded-full bg-cash" aria-hidden="true" />
+                      <span>
+                        Wallet connected. Redirecting to dashboard...
+                      </span>
+                    </div>
                   </div>
                 </>
               )}

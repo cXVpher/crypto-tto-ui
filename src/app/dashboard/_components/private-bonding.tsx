@@ -3,12 +3,12 @@
 import { useRouter } from "next/navigation";
 import { formatBalance } from "@/lib/utils";
 import { TOKEN_SYMBOL } from "@/lib/mock-data";
-import { useWallet } from "@/lib/wallet-context";
 import { Lock } from "@phosphor-icons/react";
+import { useWalletStore } from "@/store/use-wallet-store";
 
 export function PrivateBonding() {
   const router = useRouter();
-  const { privateBonding } = useWallet();
+  const privateBonding = useWalletStore((state) => state.privateBonding);
 
   return (
     <div className="mb-8">

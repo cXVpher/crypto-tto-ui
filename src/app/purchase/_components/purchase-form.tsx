@@ -50,7 +50,7 @@ export function PurchaseForm() {
           placeholder="Min. 1 USDT"
           value={amountUsdt}
           onChange={(e) => handleAmountChange(e.target.value)}
-          className="w-full rounded-xl border border-white/10 bg-navy-lighter px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 transition-all focus:border-gold/40 focus:outline-none focus:ring-1 focus:ring-gold/20"
+          className="field-input w-full rounded-xl px-4 py-3 text-sm transition-all focus:outline-none"
         />
       </div>
 
@@ -58,7 +58,7 @@ export function PurchaseForm() {
         <label className="mb-2 block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
           Price (USDT)
         </label>
-        <div className="w-full rounded-xl border border-white/5 bg-navy-lighter/50 px-4 py-3 text-sm text-true-gold">
+        <div className="field-output w-full rounded-xl px-4 py-3 text-sm">
           {price}
         </div>
       </div>
@@ -67,7 +67,7 @@ export function PurchaseForm() {
         <label className="mb-2 block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
           Receive ({TOKEN_SYMBOL})
         </label>
-        <div className="w-full rounded-xl border border-white/5 bg-navy-lighter/50 px-4 py-3 text-sm font-semibold text-true-gold">
+        <div className="field-output w-full rounded-xl px-4 py-3 text-sm font-semibold">
           {receiveAmount > 0
             ? `${formatBalance(receiveAmount)} ${TOKEN_SYMBOL}`
             : `0 ${TOKEN_SYMBOL}`}

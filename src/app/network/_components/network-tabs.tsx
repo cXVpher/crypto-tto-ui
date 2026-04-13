@@ -12,7 +12,15 @@ export function NetworkTabs({ activeTab, setActiveTab }: NetworkTabsProps) {
   ];
 
   return (
-    <div className="flex bg-navy-lighter/50 rounded-xl p-1 border border-white/5 mb-4">
+    <div
+      className="mb-4 flex rounded-xl border p-1"
+      style={{
+        background: "rgba(255,255,255,0.075)",
+        borderColor: "rgba(126,194,255,0.09)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+      }}
+    >
       {tabs.map((tab) => (
         <button
           key={tab.key}
@@ -26,11 +34,11 @@ export function NetworkTabs({ activeTab, setActiveTab }: NetworkTabsProps) {
             activeTab === tab.key
               ? {
                   background:
-                    "linear-gradient(135deg, rgba(106,178,255,0.55) 0%, rgba(59,100,220,0.75) 100%)",
+                    "linear-gradient(135deg, rgba(126,194,255,0.62) 0%, rgba(75,125,232,0.82) 100%)",
                   boxShadow:
-                    "0 4px 20px rgba(106,178,255,0.25), inset 0 1px 0 rgba(255,255,255,0.2)",
+                    "0 4px 20px rgba(126,194,255,0.28), inset 0 1px 0 rgba(255,255,255,0.22)",
                 }
-              : undefined
+              : { color: "#98abd4" }
           }
         >
           {tab.label}
