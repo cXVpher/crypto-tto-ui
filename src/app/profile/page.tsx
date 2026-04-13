@@ -6,9 +6,11 @@ import { ProfileHeader } from "./_components/profile-header";
 import { ProfileInfoList } from "./_components/profile-info-list";
 import { LogoutButton } from "./_components/logout-button";
 
+const USE_MOCK_API = process.env.NEXT_PUBLIC_USE_MOCK_API === "true";
+
 export default async function ProfilePage() {
   const accessToken = await getServerAccessToken();
-  const profile = accessToken
+  const profile = USE_MOCK_API || accessToken
     ? await getProfileData({ accessToken })
     : userProfile;
 

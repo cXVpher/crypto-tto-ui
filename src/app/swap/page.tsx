@@ -5,9 +5,11 @@ import { SwapBalance } from "./_components/swap-balance";
 import { SwapForm } from "./_components/swap-form";
 import { SwapHistoryList } from "./_components/swap-history-list";
 
+const USE_MOCK_API = process.env.NEXT_PUBLIC_USE_MOCK_API === "true";
+
 export default async function SwapPage() {
   const accessToken = await getServerAccessToken();
-  const swapHistory = accessToken
+  const swapHistory = USE_MOCK_API || accessToken
     ? await getSwapHistoryData({ accessToken })
     : [];
 

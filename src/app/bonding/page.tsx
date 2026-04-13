@@ -4,11 +4,15 @@ import { getServerAccessToken } from "@/lib/server-auth";
 import { BondingPackageList } from "./_components/bonding-package-list";
 import { MyBondingList } from "./_components/my-bonding-list";
 
+const USE_MOCK_API = process.env.NEXT_PUBLIC_USE_MOCK_API === "true";
+
 export default async function BondingPage() {
   const accessToken = await getServerAccessToken();
   const [packages, myBondingList] = await Promise.all([
     getBondingPackages(),
-    accessToken ? getMyBondingList({ accessToken }) : Promise.resolve([]),
+    USE_MOCK_API || accessToken
+      ? getMyBondingList({ accessToken })
+      : Promise.resolve([]),
   ]);
 
   return (
