@@ -6,7 +6,13 @@ import { TOKEN_SYMBOL } from "@/lib/mock-data";
 import { TrendUp } from "@phosphor-icons/react";
 import { useWalletStore } from "@/store/use-wallet-store";
 
-export function MainBalanceCard() {
+interface MainBalanceCardProps {
+  tokenSymbol?: string;
+}
+
+export function MainBalanceCard({
+  tokenSymbol = TOKEN_SYMBOL,
+}: MainBalanceCardProps) {
   const balance = useWalletStore((state) => state.balance);
 
   return (
@@ -45,7 +51,7 @@ export function MainBalanceCard() {
         <h1 className="text-4xl font-bold tracking-tight mb-2" style={{ color: "#dbe5ff" }}>
           {formatBalance(balance)}{" "}
           <span className="text-2xl font-semibold" style={{ color: "#6ab2ff" }}>
-            {TOKEN_SYMBOL}
+            {tokenSymbol}
           </span>
         </h1>
 

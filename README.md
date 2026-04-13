@@ -6,6 +6,7 @@
 - Added client page wrappers for server/data boundaries in history and network flows with `history-page-client.tsx` and `network-page-client.tsx`.
 - Added animated navigation infrastructure with `bottom-nav-config.ts`, `navigation-transition-context.tsx`, and `page-transition.tsx`.
 - Added Zod and React Hook Form based validation for withdraw and swap flows with inline field-level errors and guarded submission.
+- Added TanStack Query integration with a shared `QueryProvider`, a `useDashboardData` hook, and dashboard loading/error states backed by the API service.
 
 ## fix
 - Prevented authenticated pages from failing when live auth data is unavailable by falling back safely for bonding, history, network, profile, and swap views.
@@ -28,6 +29,7 @@
 
 ## chore
 - Added `react-hook-form`, `@hookform/resolvers`, and `zod` as project dependencies.
+- Added `@tanstack/react-query` and `@tanstack/react-query-devtools` as project dependencies.
 - Kept the project aligned with Next.js 16 client/server patterns, async `searchParams`, and server-rendering boundaries while the migration was in progress.
 
 ## test

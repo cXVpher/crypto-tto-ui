@@ -6,6 +6,7 @@ import { MobileFrame } from "@/components/layout/mobile-frame";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { PageTransition } from "@/components/layout/page-transition";
 import { NavigationTransitionProvider } from "@/components/layout/navigation-transition-context";
+import { QueryProvider } from "@/components/providers/query-provider";
 
 const jakartaSans = Plus_Jakarta_Sans({
   variable: "--font-sans",
@@ -40,7 +41,9 @@ export default function RootLayout({
         <NavigationTransitionProvider>
           <MobileFrame>
             <div id="page-header-root" />
-            <PageTransition>{children}</PageTransition>
+            <QueryProvider>
+              <PageTransition>{children}</PageTransition>
+            </QueryProvider>
             <BottomNav />
           </MobileFrame>
         </NavigationTransitionProvider>
