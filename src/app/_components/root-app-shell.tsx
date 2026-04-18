@@ -7,6 +7,7 @@ import { MobileFrame } from "@/components/layout/mobile-frame";
 import { NavigationTransitionProvider } from "@/components/layout/navigation-transition-context";
 import { PageTransition } from "@/components/layout/page-transition";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { WalletSessionBootstrap } from "@/app/_components/wallet-session-bootstrap";
 
 interface RootAppShellProps {
   children: React.ReactNode;
@@ -17,7 +18,12 @@ export function RootAppShell({ children }: RootAppShellProps) {
   const isAdminRoute = pathname.startsWith("/admin");
 
   if (isAdminRoute) {
-    return <QueryProvider>{children}</QueryProvider>;
+    return (
+      <QueryProvider>
+        <WalletSessionBootstrap />
+        {children}
+      </QueryProvider>
+    );
   }
 
   return (
@@ -25,6 +31,7 @@ export function RootAppShell({ children }: RootAppShellProps) {
       <MobileFrame>
         <div id="page-header-root" />
         <QueryProvider>
+          <WalletSessionBootstrap />
           <PageTransition>{children}</PageTransition>
         </QueryProvider>
         <BottomNav />

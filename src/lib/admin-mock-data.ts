@@ -4,9 +4,7 @@ import type {
   AdminBondingRecord,
   AdminChartPoint,
   AdminPurchase,
-  AdminSettingsData,
   AdminSwap,
-  AdminTokenData,
   AdminUser,
   AdminWithdrawal,
 } from "@/lib/admin-types";
@@ -206,7 +204,7 @@ export const adminActiveBondings: AdminBondingRecord[] = [
     amount: 9100,
     startDate: "09 Apr 2026",
     endDate: "09 May 2026",
-    status: "PENDING",
+    status: "CANCELLED",
   },
   {
     id: "bond-07",
@@ -242,7 +240,7 @@ export const adminPurchases: AdminPurchase[] = [
     amountUsdt: 1200,
     receivedTto: 6000,
     date: "16 Apr 2026 14:20",
-    status: "REVIEW",
+    status: "VERIFIED",
   },
   {
     id: "pur-04",
@@ -297,7 +295,7 @@ export const adminWithdrawals: AdminWithdrawal[] = [
     wallet: "0x18eD7cA03872B1345D7a",
     fee: 44,
     date: "16 Apr 2026 18:22",
-    status: "PENDING",
+    status: "PROCESSING",
   },
   {
     id: "wd-02",
@@ -315,7 +313,7 @@ export const adminWithdrawals: AdminWithdrawal[] = [
     wallet: "0x9A7314ba8B72A94752c2",
     fee: 8,
     date: "15 Apr 2026 19:43",
-    status: "REVIEW",
+    status: "COMPLETED",
   },
   {
     id: "wd-04",
@@ -393,7 +391,20 @@ export const adminRecentActivity: AdminActivityItem[] = [
   },
 ];
 
-export const adminTokenData: AdminTokenData = {
+export const adminTokenData: {
+  currentPrice: number;
+  manualOverride: number | null;
+  tokenName: string;
+  symbol: string;
+  description: string;
+  priceHistory: AdminChartPoint[];
+  history: Array<{
+    id: string;
+    timestamp: string;
+    price: number;
+    source: "Market" | "Manual";
+  }>;
+} = {
   currentPrice: 0.2,
   manualOverride: 0.208,
   tokenName: "TitanToon",
@@ -442,8 +453,17 @@ export const adminTokenData: AdminTokenData = {
   ],
 };
 
-export const adminSettingsData: AdminSettingsData = {
-  withdrawalFeePercent: 2,
+export const adminSettingsData: {
+  flatFeeUsdt: number;
+  maintenanceMode: boolean;
+  announcement: string;
+  activityLog: Array<{
+    id: string;
+    actor: string;
+    action: string;
+    timestamp: string;
+  }>;
+} = {
   flatFeeUsdt: 5,
   maintenanceMode: false,
   announcement:

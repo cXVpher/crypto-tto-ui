@@ -12,6 +12,12 @@ interface OverviewPageProps {
 
 export function OverviewPage({ overview }: OverviewPageProps) {
   const heroActivity = overview.recentActivity[0];
+  const modeLabel =
+    overview.meta.source === "mock"
+      ? "Mock-backed analytics"
+      : overview.meta.source === "live"
+        ? "Live admin API"
+        : "Hybrid live + prototype";
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -22,9 +28,15 @@ export function OverviewPage({ overview }: OverviewPageProps) {
               Live control room
             </div>
             <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">
-              Mock-backed analytics
+              {modeLabel}
             </div>
           </div>
+
+          {overview.meta.notice ? (
+            <div className="mt-4 rounded-[1.25rem] border border-cyan-300/16 bg-cyan-300/10 px-4 py-3 text-sm text-cyan-50">
+              {overview.meta.notice}
+            </div>
+          ) : null}
 
           <div className="mt-5 rounded-[1.5rem] border border-cyan-300/12 bg-cyan-300/6 p-3.5 sm:hidden">
             <div className="flex items-start justify-between gap-3">

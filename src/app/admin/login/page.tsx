@@ -38,7 +38,7 @@ export default async function AdminLoginPage() {
               {[
                 ["Auth", "Signed HTTP-only admin cookie"],
                 ["Routes", "Proxy-protected /admin space"],
-                ["Mode", "Mock-backed management views"],
+                ["Mode", "Mock or live admin views"],
               ].map(([label, value]) => (
                 <div
                   key={label}
@@ -64,7 +64,8 @@ export default async function AdminLoginPage() {
               </h2>
               <p className="text-sm leading-6 text-slate-400 sm:text-base">
                 Enter the server-side passphrase from `.env.local` to open the
-                admin workspace.
+                admin workspace. Live admin data also requires a connected backend
+                admin wallet session.
               </p>
             </div>
 

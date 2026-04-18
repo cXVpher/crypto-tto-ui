@@ -24,8 +24,11 @@ export default function AdminError({
         The admin segment failed to render.
       </h2>
       <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-400">
-        Retry the segment render. If the issue persists, inspect the server log
-        using the error digest{error.digest ? ` ${error.digest}` : ""}.
+        {error.message}
+      </p>
+      <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-400">
+        Retry the segment render. If the issue persists, inspect the server log using
+        the error digest{error.digest ? ` ${error.digest}` : ""}.
       </p>
       <Button
         type="button"

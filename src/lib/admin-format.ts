@@ -129,24 +129,33 @@ export function getStatusClasses(
     | "ACTIVE"
     | "SUSPENDED"
     | "REVIEW"
+    | "UNKNOWN"
     | "RUNNING"
     | "IDLE"
     | "ENDED"
     | "MATURED"
+    | "CANCELLED"
     | "PENDING"
     | "INACTIVE"
     | "COMPLETED"
     | "FAILED"
+    | "VERIFIED"
+    | "PROCESSING"
 ) {
   if (status === "ACTIVE" || status === "RUNNING" || status === "COMPLETED") {
     return "border-emerald-300/16 bg-emerald-300/10 text-emerald-100";
   }
 
-  if (status === "REVIEW" || status === "PENDING") {
+  if (
+    status === "REVIEW" ||
+    status === "PENDING" ||
+    status === "VERIFIED" ||
+    status === "PROCESSING"
+  ) {
     return "border-amber-300/16 bg-amber-300/10 text-amber-100";
   }
 
-  if (status === "FAILED" || status === "SUSPENDED") {
+  if (status === "FAILED" || status === "SUSPENDED" || status === "CANCELLED") {
     return "border-rose-300/16 bg-rose-300/10 text-rose-100";
   }
 

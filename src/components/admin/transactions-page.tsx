@@ -1,13 +1,15 @@
 "use client";
 
-import { useDeferredValue, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import {
   CheckCircle,
   Eye,
   Funnel,
+  ArrowClockwise,
   XCircle,
 } from "@phosphor-icons/react";
 
+import { retryAdminWithdrawalAction } from "@/app/admin/dashboard-actions";
 import { AdminConfirmDialog } from "@/components/admin/admin-confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -96,6 +98,8 @@ function TransactionsFilters({
         <option value="ALL">All statuses</option>
         <option value="COMPLETED">Completed</option>
         <option value="PENDING">Pending</option>
+        <option value="VERIFIED">Verified</option>
+        <option value="PROCESSING">Processing</option>
         <option value="REVIEW">Review</option>
         <option value="FAILED">Failed</option>
       </select>
@@ -143,12 +147,16 @@ export function TransactionsPage({ transactionsData }: TransactionsPageProps) {
   const [selectedTransaction, setSelectedTransaction] = useState<SelectedTransaction | null>(
     null
   );
+  const purchases = transactionsData.purchases;
+  const swaps = transactionsData.swaps;
   const [withdrawals, setWithdrawals] = useState(transactionsData.withdrawals);
   const [pendingDecision, setPendingDecision] = useState<PendingWithdrawalDecision>(null);
   const [notice, setNotice] = useState("");
+  const [retryWithdrawalId, setRetryWithdrawalId] = useState<string | null>(null);
   const deferredSearch = useDeferredValue(search);
   const normalizedSearch = deferredSearch.trim().toLowerCase();
   const detailSide = useAdaptiveSheetSide();
+  const isMockMode = transactionsData.meta.source === "mock";
 
   const matchesFilters = (
     user: string,
@@ -184,10 +192,10 @@ export function TransactionsPage({ transactionsData }: TransactionsPageProps) {
   };
 
   const transactions = {
-    purchases: transactionsData.purchases.filter((item) =>
+    purchases: purchases.filter((item) =>
       matchesFilters(item.user, item.status, item.date, item.amountUsdt)
     ),
-    swaps: transactionsData.swaps.filter((item) =>
+    swaps: swaps.filter((item) =>
       matchesFilters(item.user, item.status, item.date, item.toUsdt)
     ),
     withdrawals: withdrawals.filter((item) =>
@@ -195,12 +203,32 @@ export function TransactionsPage({ transactionsData }: TransactionsPageProps) {
     ),
   };
 
-  const pendingWithdrawals = withdrawals.filter((item) => item.status === "PENDING").length;
+  const pendingWithdrawals = withdrawals.filter(
+    (item) => item.status === "PENDING" || item.status === "PROCESSING"
+  ).length;
   const activeRows = transactions[activeTab];
   const decisionTarget =
     pendingDecision == null
       ? null
       : withdrawals.find((item) => item.id === pendingDecision.withdrawalId) ?? null;
+  const selectedTransactionHash =
+    selectedTransaction?.item.txHash ??
+    (selectedTransaction && isMockMode
+      ? buildMockTxHash(selectedTransaction.item.id)
+      : "Unavailable");
+  const availableTabs = useMemo(
+    () =>
+      ([
+        ["purchases", "Purchases"],
+        ...(transactionsData.capabilities.liveSwaps || swaps.length > 0 || isMockMode
+          ? ([["swaps", isMockMode ? "Swaps" : "Swaps unavailable"]] as Array<
+              [TransactionsTab, string]
+            >)
+          : []),
+        ["withdrawals", "Withdrawals"],
+      ] as Array<[TransactionsTab, string]>),
+    [isMockMode, swaps.length, transactionsData.capabilities.liveSwaps]
+  );
 
   const approveOrRejectWithdrawal = (decision: "approve" | "reject") => {
     if (!decisionTarget) {
@@ -223,6 +251,51 @@ export function TransactionsPage({ transactionsData }: TransactionsPageProps) {
         ? `${decisionTarget.user} withdrawal was approved locally.`
         : `${decisionTarget.user} withdrawal was rejected locally.`
     );
+  };
+
+  const retryWithdrawal = async (withdrawalId: string) => {
+    const target = withdrawals.find((item) => item.id === withdrawalId);
+
+    if (!target) {
+      return;
+    }
+
+    if (isMockMode) {
+      setWithdrawals((currentWithdrawals) =>
+        currentWithdrawals.map((item) =>
+          item.id === withdrawalId
+            ? {
+                ...item,
+                status: "PROCESSING",
+              }
+            : item
+        )
+      );
+      setNotice(`${target.user} withdrawal was retried locally.`);
+      return;
+    }
+
+    try {
+      setRetryWithdrawalId(withdrawalId);
+      await retryAdminWithdrawalAction({ withdrawalId });
+      setWithdrawals((currentWithdrawals) =>
+        currentWithdrawals.map((item) =>
+          item.id === withdrawalId
+            ? {
+                ...item,
+                status: "PROCESSING",
+              }
+            : item
+        )
+      );
+      setNotice(`${target.user} withdrawal was queued for retry via the admin API.`);
+    } catch (error) {
+      setNotice(
+        error instanceof Error ? error.message : "Unable to retry the withdrawal."
+      );
+    } finally {
+      setRetryWithdrawalId(null);
+    }
   };
 
   const purchaseColumns: DataTableColumn<AdminPurchase>[] = [
@@ -335,8 +408,8 @@ export function TransactionsPage({ transactionsData }: TransactionsPageProps) {
     },
     {
       key: "amount",
-      header: "Amount",
-      cell: (item) => <span className="text-slate-200">{formatTokenAmount(item.amount)}</span>,
+      header: "Amount USDT",
+      cell: (item) => <span className="text-slate-200">{formatUsd(item.amount)}</span>,
     },
     {
       key: "wallet",
@@ -346,7 +419,7 @@ export function TransactionsPage({ transactionsData }: TransactionsPageProps) {
     {
       key: "fee",
       header: "Fee",
-      cell: (item) => <span className="text-slate-200">{formatTokenAmount(item.fee)}</span>,
+      cell: (item) => <span className="text-slate-200">{formatUsd(item.fee)}</span>,
     },
     {
       key: "status",
@@ -377,28 +450,46 @@ export function TransactionsPage({ transactionsData }: TransactionsPageProps) {
             Details
           </Button>
           {item.status === "PENDING" ? (
+            transactionsData.capabilities.reviewPendingWithdrawal ? (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() =>
+                    setPendingDecision({ withdrawalId: item.id, decision: "approve" })
+                  }
+                  className="h-10 rounded-2xl border-emerald-300/16 bg-emerald-300/10 text-emerald-100 hover:bg-emerald-300/20"
+                >
+                  <CheckCircle className="size-4" />
+                  Approve
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() =>
+                    setPendingDecision({ withdrawalId: item.id, decision: "reject" })
+                  }
+                  className="h-10 rounded-2xl border-rose-300/16 bg-rose-300/10 text-rose-100 hover:bg-rose-300/20"
+                >
+                  <XCircle className="size-4" />
+                  Reject
+                </Button>
+              </>
+            ) : null
+          ) : null}
+          {item.status === "FAILED" && transactionsData.capabilities.retryFailedWithdrawal ? (
             <>
               <Button
                 type="button"
                 variant="outline"
-                onClick={() =>
-                  setPendingDecision({ withdrawalId: item.id, decision: "approve" })
-                }
+                onClick={() => {
+                  void retryWithdrawal(item.id);
+                }}
+                disabled={retryWithdrawalId === item.id}
                 className="h-10 rounded-2xl border-emerald-300/16 bg-emerald-300/10 text-emerald-100 hover:bg-emerald-300/20"
               >
-                <CheckCircle className="size-4" />
-                Approve
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() =>
-                  setPendingDecision({ withdrawalId: item.id, decision: "reject" })
-                }
-                className="h-10 rounded-2xl border-rose-300/16 bg-rose-300/10 text-rose-100 hover:bg-rose-300/20"
-              >
-                <XCircle className="size-4" />
-                Reject
+                <ArrowClockwise className="size-4" />
+                {retryWithdrawalId === item.id ? "Retrying..." : "Retry"}
               </Button>
             </>
           ) : null}
@@ -420,7 +511,7 @@ export function TransactionsPage({ transactionsData }: TransactionsPageProps) {
             </h2>
             <p className="mt-2 text-sm text-slate-400">
               {pendingWithdrawals} withdrawal{pendingWithdrawals === 1 ? "" : "s"} currently
-              waiting for manual action.
+              {isMockMode ? " waiting for manual action." : " processing in the backend queue."}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -456,11 +547,7 @@ export function TransactionsPage({ transactionsData }: TransactionsPageProps) {
         ) : null}
 
         <div className="mt-5 flex flex-wrap gap-2">
-          {([
-            ["purchases", "Purchases"],
-            ["swaps", "Swaps"],
-            ["withdrawals", "Withdrawals"],
-          ] as Array<[TransactionsTab, string]>).map(([tab, label]) => (
+          {availableTabs.map(([tab, label]) => (
             <button
               key={tab}
               type="button"
@@ -492,6 +579,12 @@ export function TransactionsPage({ transactionsData }: TransactionsPageProps) {
             onMaxAmountChange={setMaxAmount}
           />
         </div>
+
+        {transactionsData.meta.notice ? (
+          <div className="mt-5 rounded-[1.5rem] border border-cyan-300/16 bg-cyan-300/10 px-4 py-3 text-sm text-cyan-50">
+            {transactionsData.meta.notice}
+          </div>
+        ) : null}
 
         <div className="mt-5">
           {activeTab === "purchases" ? (
@@ -615,11 +708,11 @@ export function TransactionsPage({ transactionsData }: TransactionsPageProps) {
                   <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
                     <div>
                       <p className="text-slate-500">Amount</p>
-                      <p className="mt-1 text-slate-100">{formatTokenAmount(item.amount)}</p>
+                      <p className="mt-1 text-slate-100">{formatUsd(item.amount)}</p>
                     </div>
                     <div>
                       <p className="text-slate-500">Fee</p>
-                      <p className="mt-1 text-slate-100">{formatTokenAmount(item.fee)}</p>
+                      <p className="mt-1 text-slate-100">{formatUsd(item.fee)}</p>
                     </div>
                   </div>
                   <div className="mt-4 flex flex-wrap gap-2">
@@ -631,7 +724,8 @@ export function TransactionsPage({ transactionsData }: TransactionsPageProps) {
                     >
                       Details
                     </Button>
-                    {item.status === "PENDING" ? (
+                    {item.status === "PENDING" &&
+                    transactionsData.capabilities.reviewPendingWithdrawal ? (
                       <>
                         <Button
                           type="button"
@@ -654,6 +748,20 @@ export function TransactionsPage({ transactionsData }: TransactionsPageProps) {
                           Reject
                         </Button>
                       </>
+                    ) : null}
+                    {item.status === "FAILED" &&
+                    transactionsData.capabilities.retryFailedWithdrawal ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          void retryWithdrawal(item.id);
+                        }}
+                        disabled={retryWithdrawalId === item.id}
+                        className="h-11 flex-1 rounded-2xl border-emerald-300/16 bg-emerald-300/10 text-emerald-100 hover:bg-emerald-300/20"
+                      >
+                        {retryWithdrawalId === item.id ? "Retrying..." : "Retry"}
+                      </Button>
                     ) : null}
                   </div>
                 </article>
@@ -712,7 +820,9 @@ export function TransactionsPage({ transactionsData }: TransactionsPageProps) {
                       : "Withdrawal detail"}
                 </SheetTitle>
                 <SheetDescription>
-                  Mock transaction detail including a generated tx hash.
+                  {isMockMode
+                    ? "Mock transaction detail including a generated tx hash."
+                    : "Live transaction detail from the admin dashboard data source."}
                 </SheetDescription>
               </SheetHeader>
               <div className="space-y-5 px-4 pb-6">
@@ -736,10 +846,17 @@ export function TransactionsPage({ transactionsData }: TransactionsPageProps) {
                     </div>
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-slate-500">Tx hash</span>
-                      <span className="text-slate-100">
-                        {buildMockTxHash(selectedTransaction.item.id)}
-                      </span>
+                      <span className="text-slate-100">{selectedTransactionHash}</span>
                     </div>
+                    {"phaseName" in selectedTransaction.item &&
+                    selectedTransaction.item.phaseName ? (
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-slate-500">Phase</span>
+                        <span className="text-slate-100">
+                          {selectedTransaction.item.phaseName}
+                        </span>
+                      </div>
+                    ) : null}
                     {"wallet" in selectedTransaction.item ? (
                       <div className="flex items-center justify-between gap-3">
                         <span className="text-slate-500">Wallet</span>
@@ -789,15 +906,23 @@ export function TransactionsPage({ transactionsData }: TransactionsPageProps) {
                         <div className="flex items-center justify-between gap-3">
                           <span className="text-slate-500">Amount</span>
                           <span className="text-slate-100">
-                            {formatTokenAmount(selectedTransaction.item.amount)}
+                            {formatUsd(selectedTransaction.item.amount)}
                           </span>
                         </div>
                         <div className="flex items-center justify-between gap-3">
                           <span className="text-slate-500">Fee</span>
                           <span className="text-slate-100">
-                            {formatTokenAmount(selectedTransaction.item.fee)}
+                            {formatUsd(selectedTransaction.item.fee)}
                           </span>
                         </div>
+                        {selectedTransaction.item.netAmount != null ? (
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="text-slate-500">Net USDT</span>
+                            <span className="text-slate-100">
+                              {formatUsd(selectedTransaction.item.netAmount)}
+                            </span>
+                          </div>
+                        ) : null}
                       </>
                     ) : null}
                   </div>

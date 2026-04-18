@@ -48,18 +48,19 @@ function DashboardLoadingState() {
 export default function DashboardPage() {
   const router = useRouter();
   const hasHydrated = useWalletStore((state) => state.hasHydrated);
+  const hasResolvedSession = useWalletStore((state) => state.hasResolvedSession);
   const isConnected = useWalletStore((state) => state.isConnected);
   const { data, isLoading, isError, refetch } = useDashboardData(
-    hasHydrated && isConnected
+    hasHydrated && hasResolvedSession && isConnected
   );
 
   useEffect(() => {
-    if (hasHydrated && !isConnected) {
+    if (hasHydrated && hasResolvedSession && !isConnected) {
       router.replace("/");
     }
-  }, [hasHydrated, isConnected, router]);
+  }, [hasHydrated, hasResolvedSession, isConnected, router]);
 
-  if (!hasHydrated || !isConnected) return null;
+  if (!hasHydrated || !hasResolvedSession || !isConnected) return null;
   if (isLoading) return <DashboardLoadingState />;
 
   if (isError) {

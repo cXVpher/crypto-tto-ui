@@ -1,4 +1,10 @@
 export type AdminTone = "cyan" | "emerald" | "amber" | "rose";
+export type AdminDataSource = "mock" | "live" | "hybrid";
+
+export interface AdminPageMeta {
+  source: AdminDataSource;
+  notice?: string;
+}
 
 export interface AdminChartPoint {
   label: string;
@@ -24,6 +30,7 @@ export interface AdminActivityItem {
 }
 
 export interface AdminOverviewData {
+  meta: AdminPageMeta;
   stats: AdminMetric[];
   revenueSeries: AdminChartPoint[];
   userGrowthSeries: AdminChartPoint[];
@@ -42,23 +49,43 @@ export interface AdminUser {
   rank: string;
   registeredAt: string;
   totalBonding: number;
-  status: "ACTIVE" | "SUSPENDED" | "REVIEW";
+  status: "ACTIVE" | "SUSPENDED" | "REVIEW" | "UNKNOWN";
   bondingStatus: "RUNNING" | "IDLE" | "ENDED";
   referrals: number;
   lastActive: string;
+  isAdmin?: boolean;
+  ttoBalance?: number;
+  ttoLocked?: number;
+  usdtBalance?: number;
+}
+
+export interface AdminUserContext {
+  bondings: AdminBondingRecord[];
+  purchases: AdminPurchase[];
+  swaps: AdminSwap[];
+  withdrawals: AdminWithdrawal[];
 }
 
 export interface AdminUsersData {
+  meta: AdminPageMeta;
   users: AdminUser[];
+  contexts: Record<string, AdminUserContext>;
+  capabilities: {
+    suspend: boolean;
+  };
 }
 
 export interface AdminBondingPackage {
   id: string;
+  packageId?: string;
   name: string;
   durationDays: number;
   dailyProfitRate: number;
   minAmount: number;
   status: "ACTIVE" | "INACTIVE";
+  maxDailyRate?: number;
+  updatedAt?: string;
+  supportsRateEdit?: boolean;
 }
 
 export interface AdminBondingRecord {
@@ -68,10 +95,11 @@ export interface AdminBondingRecord {
   amount: number;
   startDate: string;
   endDate: string;
-  status: "RUNNING" | "MATURED" | "PENDING";
+  status: "RUNNING" | "MATURED" | "PENDING" | "CANCELLED";
 }
 
 export interface AdminBondingData {
+  meta: AdminPageMeta;
   packages: AdminBondingPackage[];
   activeBondings: AdminBondingRecord[];
   packageBreakdown: Array<{
@@ -79,13 +107,20 @@ export interface AdminBondingData {
     value: number;
   }>;
   summary: AdminMetric[];
+  capabilities: {
+    createPackage: boolean;
+    togglePackage: boolean;
+    updateRate: boolean;
+  };
 }
 
 export type AdminTransactionStatus =
   | "COMPLETED"
   | "PENDING"
   | "FAILED"
-  | "REVIEW";
+  | "REVIEW"
+  | "VERIFIED"
+  | "PROCESSING";
 
 export interface AdminPurchase {
   id: string;
@@ -94,6 +129,8 @@ export interface AdminPurchase {
   receivedTto: number;
   date: string;
   status: AdminTransactionStatus;
+  txHash?: string | null;
+  phaseName?: string;
 }
 
 export interface AdminSwap {
@@ -103,6 +140,7 @@ export interface AdminSwap {
   toUsdt: number;
   date: string;
   status: AdminTransactionStatus;
+  txHash?: string | null;
 }
 
 export interface AdminWithdrawal {
@@ -113,15 +151,24 @@ export interface AdminWithdrawal {
   fee: number;
   date: string;
   status: AdminTransactionStatus;
+  txHash?: string | null;
+  netAmount?: number;
 }
 
 export interface AdminTransactionsData {
+  meta: AdminPageMeta;
   purchases: AdminPurchase[];
   swaps: AdminSwap[];
   withdrawals: AdminWithdrawal[];
+  capabilities: {
+    liveSwaps: boolean;
+    retryFailedWithdrawal: boolean;
+    reviewPendingWithdrawal: boolean;
+  };
 }
 
 export interface AdminTokenData {
+  meta: AdminPageMeta;
   currentPrice: number;
   manualOverride: number | null;
   tokenName: string;
@@ -134,10 +181,15 @@ export interface AdminTokenData {
     price: number;
     source: "Market" | "Manual";
   }>;
+  capabilities: {
+    updatePrice: boolean;
+    editMetadata: boolean;
+  };
 }
 
 export interface AdminSettingsData {
-  withdrawalFeePercent: number;
+  meta: AdminPageMeta;
+  swapFeePercent: number;
   flatFeeUsdt: number;
   maintenanceMode: boolean;
   announcement: string;
@@ -147,4 +199,9 @@ export interface AdminSettingsData {
     action: string;
     timestamp: string;
   }>;
+  capabilities: {
+    updateFees: boolean;
+    maintenanceMode: boolean;
+    announcement: boolean;
+  };
 }

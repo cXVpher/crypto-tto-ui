@@ -11,7 +11,7 @@ import { useNavigationTransition } from "./navigation-transition-context";
 export function BottomNav() {
   const pathname = usePathname();
   const shouldShowNav = useWalletStore(
-    (state) => state.hasHydrated && state.isConnected
+    (state) => state.hasHydrated && state.hasResolvedSession && state.isConnected
   );
   const { setRouteTransition } = useNavigationTransition();
 

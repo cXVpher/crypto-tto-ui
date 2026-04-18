@@ -14,6 +14,7 @@ export interface WalletStoreState {
   privateBonding: number;
   usdtBalance: number;
   hasHydrated: boolean;
+  hasResolvedSession: boolean;
 }
 
 export interface WalletSessionState {
@@ -32,9 +33,13 @@ interface WalletStoreActions {
   updatePrivateBonding: (privateBonding: number) => void;
   updateUsdtBalance: (usdtBalance: number) => void;
   setHasHydrated: (hasHydrated: boolean) => void;
+  setHasResolvedSession: (hasResolvedSession: boolean) => void;
 }
 
-type PersistedWalletState = Omit<WalletStoreState, "hasHydrated">;
+type PersistedWalletState = Omit<
+  WalletStoreState,
+  "hasHydrated" | "hasResolvedSession"
+>;
 
 export type WalletStore = WalletStoreState & WalletStoreActions;
 
@@ -46,6 +51,7 @@ const defaultWalletState: WalletStoreState = {
   privateBonding: 0,
   usdtBalance: 0,
   hasHydrated: false,
+  hasResolvedSession: false,
 };
 
 function getPersistedWalletState(
@@ -80,6 +86,7 @@ export const useWalletStore = create<WalletStore>()(
       setWalletSession(session) {
         set({
           isConnected: true,
+          hasResolvedSession: true,
           ...session,
         });
       },
@@ -87,6 +94,7 @@ export const useWalletStore = create<WalletStore>()(
         set({
           ...defaultWalletState,
           hasHydrated: true,
+          hasResolvedSession: true,
         });
       },
       updateBalance(balance) {
@@ -100,6 +108,9 @@ export const useWalletStore = create<WalletStore>()(
       },
       setHasHydrated(hasHydrated) {
         set({ hasHydrated });
+      },
+      setHasResolvedSession(hasResolvedSession) {
+        set({ hasResolvedSession });
       },
     }),
     {

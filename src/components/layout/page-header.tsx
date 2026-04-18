@@ -17,7 +17,7 @@ export function PageHeader({ title, showBack = true, rightAction }: PageHeaderPr
   const router = useRouter();
   const pathname = usePathname();
   const canReturnToDashboard = useWalletStore(
-    (state) => state.hasHydrated && state.isConnected
+    (state) => state.hasHydrated && state.hasResolvedSession && state.isConnected
   );
   const { setRouteTransition } = useNavigationTransition();
   const headerHost =

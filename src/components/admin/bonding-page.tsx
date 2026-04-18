@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { PencilSimple, Plus, ToggleLeft, ToggleRight } from "@phosphor-icons/react";
 
+import { updateAdminBondingRateAction } from "@/app/admin/dashboard-actions";
 import { AdminConfirmDialog } from "@/components/admin/admin-confirm-dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -42,7 +43,8 @@ const emptyPackageForm: PackageFormState = {
 
 export function BondingPage({ bondingData }: BondingPageProps) {
   const [packages, setPackages] = useState(bondingData.packages);
-  const [activeBondings] = useState(bondingData.activeBondings);
+  const [savingPackageId, setSavingPackageId] = useState<string | null>(null);
+  const activeBondings = bondingData.activeBondings;
   const [packageStatusFilter, setPackageStatusFilter] = useState("ALL");
   const [bondingStatusFilter, setBondingStatusFilter] = useState("ALL");
   const [packageFilter, setPackageFilter] = useState("ALL");
@@ -50,6 +52,7 @@ export function BondingPage({ bondingData }: BondingPageProps) {
   const [packageForm, setPackageForm] = useState<PackageFormState>(emptyPackageForm);
   const [confirmTogglePackageId, setConfirmTogglePackageId] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
+  const isMockMode = bondingData.meta.source === "mock";
 
   const filteredPackages = packages.filter((item) => {
     return packageStatusFilter === "ALL" || item.status === packageStatusFilter;
@@ -112,6 +115,11 @@ export function BondingPage({ bondingData }: BondingPageProps) {
   const confirmPackage = packages.find((item) => item.id === confirmTogglePackageId) ?? null;
 
   const openCreateDialog = () => {
+    if (!isMockMode) {
+      setNotice("The live admin API only supports rate updates for existing packages.");
+      return;
+    }
+
     setPackageForm(emptyPackageForm);
     setPackageDialogOpen(true);
   };
@@ -127,22 +135,27 @@ export function BondingPage({ bondingData }: BondingPageProps) {
     setPackageDialogOpen(true);
   };
 
-  const submitPackageForm = () => {
+  const submitPackageForm = async () => {
     const durationDays = Number(packageForm.durationDays);
     const dailyProfitRate = Number(packageForm.dailyProfitRate);
     const minAmount = Number(packageForm.minAmount);
 
     if (
-      !packageForm.name.trim() ||
-      !Number.isFinite(durationDays) ||
       !Number.isFinite(dailyProfitRate) ||
-      !Number.isFinite(minAmount)
+      (isMockMode &&
+        (!packageForm.name.trim() ||
+          !Number.isFinite(durationDays) ||
+          !Number.isFinite(minAmount)))
     ) {
-      setNotice("Package form needs valid name, duration, daily rate, and minimum.");
+      setNotice(
+        isMockMode
+          ? "Package form needs valid name, duration, daily rate, and minimum."
+          : "A valid daily rate is required."
+      );
       return;
     }
 
-    if (packageForm.id) {
+    if (isMockMode && packageForm.id) {
       setPackages((currentPackages) =>
         currentPackages.map((item) =>
           item.id === packageForm.id
@@ -157,7 +170,7 @@ export function BondingPage({ bondingData }: BondingPageProps) {
         )
       );
       setNotice(`Updated ${packageForm.name.trim()} locally.`);
-    } else {
+    } else if (isMockMode) {
       const nextPackage: AdminBondingPackage = {
         id: `pkg-${Date.now()}`,
         name: packageForm.name.trim(),
@@ -169,6 +182,40 @@ export function BondingPage({ bondingData }: BondingPageProps) {
 
       setPackages((currentPackages) => [nextPackage, ...currentPackages]);
       setNotice(`Created ${nextPackage.name} locally.`);
+    } else {
+      const selectedPackage = packages.find((item) => item.id === packageForm.id);
+
+      if (!selectedPackage?.packageId) {
+        setNotice("Only existing backend packages can be updated in live mode.");
+        return;
+      }
+
+      try {
+        setSavingPackageId(selectedPackage.id);
+        await updateAdminBondingRateAction({
+          packageId: selectedPackage.packageId,
+          dailyProfitRate,
+        });
+
+        setPackages((currentPackages) =>
+          currentPackages.map((item) =>
+            item.id === selectedPackage.id
+              ? {
+                  ...item,
+                  dailyProfitRate,
+                }
+              : item
+          )
+        );
+        setNotice(`Updated ${selectedPackage.name} via the admin API.`);
+      } catch (error) {
+        setNotice(
+          error instanceof Error ? error.message : "Unable to update the bonding rate."
+        );
+        return;
+      } finally {
+        setSavingPackageId(null);
+      }
     }
 
     setPackageDialogOpen(false);
@@ -225,31 +272,38 @@ export function BondingPage({ bondingData }: BondingPageProps) {
     {
       key: "actions",
       header: "Actions",
-      className: "w-[240px]",
+      className: "w-[260px]",
       cell: (item) => (
         <div className="flex flex-wrap gap-2">
           <Button
             type="button"
             variant="outline"
             onClick={() => openEditDialog(item)}
+            disabled={savingPackageId === item.id}
             className="h-10 rounded-2xl border-white/10 bg-white/5 text-slate-100 hover:bg-white/10"
           >
             <PencilSimple className="size-4" />
-            Edit
+            {savingPackageId === item.id
+              ? "Saving..."
+              : isMockMode
+                ? "Edit"
+                : "Update rate"}
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setConfirmTogglePackageId(item.id)}
-            className="h-10 rounded-2xl border-white/10 bg-white/5 text-slate-100 hover:bg-white/10"
-          >
-            {item.status === "ACTIVE" ? (
-              <ToggleRight className="size-4" />
-            ) : (
-              <ToggleLeft className="size-4" />
-            )}
-            {item.status === "ACTIVE" ? "Deactivate" : "Activate"}
-          </Button>
+          {isMockMode ? (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setConfirmTogglePackageId(item.id)}
+              className="h-10 rounded-2xl border-white/10 bg-white/5 text-slate-100 hover:bg-white/10"
+            >
+              {item.status === "ACTIVE" ? (
+                <ToggleRight className="size-4" />
+              ) : (
+                <ToggleLeft className="size-4" />
+              )}
+              {item.status === "ACTIVE" ? "Deactivate" : "Activate"}
+            </Button>
+          ) : null}
         </div>
       ),
     },
@@ -352,10 +406,11 @@ export function BondingPage({ bondingData }: BondingPageProps) {
             <Button
               type="button"
               onClick={openCreateDialog}
+              disabled={!isMockMode}
               className="h-11 rounded-2xl bg-cyan-300 text-slate-950 hover:bg-cyan-200"
             >
               <Plus className="size-4" />
-              Create package
+              {isMockMode ? "Create package" : "Rate-only mode"}
             </Button>
           </div>
 
@@ -376,10 +431,17 @@ export function BondingPage({ bondingData }: BondingPageProps) {
               <option value="INACTIVE">Inactive</option>
             </select>
             <div className="rounded-[1.5rem] border border-white/8 bg-white/4 px-4 py-3 text-sm text-slate-400">
-              Changes are local in mock mode and are meant to validate the admin workflow
-              before real backend mutations are wired.
+              {isMockMode
+                ? "Changes are local in mock mode and are meant to validate the admin workflow before live mutations are used."
+                : "Live mode currently supports updating existing package rates only. Package creation, visibility toggles, and minimum amounts are not exposed by the current admin API."}
             </div>
           </div>
+
+          {bondingData.meta.notice ? (
+            <div className="mt-5 rounded-[1.5rem] border border-cyan-300/16 bg-cyan-300/10 px-4 py-3 text-sm text-cyan-50">
+              {bondingData.meta.notice}
+            </div>
+          ) : null}
 
           <div className="mt-5">
             <DataTable
@@ -422,18 +484,25 @@ export function BondingPage({ bondingData }: BondingPageProps) {
                       type="button"
                       variant="outline"
                       onClick={() => openEditDialog(item)}
+                      disabled={savingPackageId === item.id}
                       className="h-11 flex-1 rounded-2xl border-white/10 bg-white/5 text-slate-100 hover:bg-white/10"
                     >
-                      Edit
+                      {savingPackageId === item.id
+                        ? "Saving..."
+                        : isMockMode
+                          ? "Edit"
+                          : "Update rate"}
                     </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setConfirmTogglePackageId(item.id)}
-                      className="h-11 flex-1 rounded-2xl border-white/10 bg-white/5 text-slate-100 hover:bg-white/10"
-                    >
-                      {item.status === "ACTIVE" ? "Deactivate" : "Activate"}
-                    </Button>
+                    {isMockMode ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setConfirmTogglePackageId(item.id)}
+                        className="h-11 flex-1 rounded-2xl border-white/10 bg-white/5 text-slate-100 hover:bg-white/10"
+                      >
+                        {item.status === "ACTIVE" ? "Deactivate" : "Activate"}
+                      </Button>
+                    ) : null}
                   </div>
                 </article>
               )}
@@ -522,11 +591,16 @@ export function BondingPage({ bondingData }: BondingPageProps) {
         <DialogContent className="max-w-lg rounded-[1.75rem] border border-white/8 bg-[#07101d] p-0 text-white">
           <DialogHeader className="px-5 pt-5">
             <DialogTitle>
-              {packageForm.id ? "Edit bonding package" : "Create bonding package"}
+              {isMockMode
+                ? packageForm.id
+                  ? "Edit bonding package"
+                  : "Create bonding package"
+                : "Update bonding rate"}
             </DialogTitle>
             <DialogDescription className="leading-6 text-slate-400">
-              Update the package catalogue locally to validate admin operations in mock
-              mode.
+              {isMockMode
+                ? "Update the package catalogue locally to validate admin operations in mock mode."
+                : "The live admin API currently exposes rate updates for existing packages only."}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 px-5 pb-5">
@@ -540,6 +614,7 @@ export function BondingPage({ bondingData }: BondingPageProps) {
                 onChange={(event) =>
                   setPackageForm((current) => ({ ...current, name: event.target.value }))
                 }
+                disabled={!isMockMode}
                 className="mt-2 h-11 rounded-2xl border-white/10 bg-white/5"
               />
             </div>
@@ -557,6 +632,7 @@ export function BondingPage({ bondingData }: BondingPageProps) {
                       durationDays: event.target.value,
                     }))
                   }
+                  disabled={!isMockMode}
                   className="mt-2 h-11 rounded-2xl border-white/10 bg-white/5"
                 />
               </div>
@@ -589,10 +665,17 @@ export function BondingPage({ bondingData }: BondingPageProps) {
                       minAmount: event.target.value,
                     }))
                   }
+                  disabled={!isMockMode}
                   className="mt-2 h-11 rounded-2xl border-white/10 bg-white/5"
                 />
               </div>
             </div>
+            {!isMockMode ? (
+              <p className="text-sm leading-6 text-slate-400">
+                Package name, duration, and minimum are read-only because the current admin API
+                only allows rate updates.
+              </p>
+            ) : null}
           </div>
           <DialogFooter className="rounded-b-[1.75rem] border-white/8 bg-white/4">
             <Button
@@ -605,17 +688,25 @@ export function BondingPage({ bondingData }: BondingPageProps) {
             </Button>
             <Button
               type="button"
-              onClick={submitPackageForm}
+              onClick={() => {
+                void submitPackageForm();
+              }}
               className="h-11 rounded-2xl bg-cyan-300 text-slate-950 hover:bg-cyan-200"
             >
-              {packageForm.id ? "Save changes" : "Create package"}
+              {savingPackageId
+                ? "Saving..."
+                : isMockMode
+                  ? packageForm.id
+                    ? "Save changes"
+                    : "Create package"
+                  : "Save rate"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <AdminConfirmDialog
-        open={confirmPackage != null}
+        open={isMockMode && confirmPackage != null}
         onOpenChange={(open) => !open && setConfirmTogglePackageId(null)}
         title={
           confirmPackage?.status === "ACTIVE"

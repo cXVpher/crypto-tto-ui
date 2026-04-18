@@ -30,6 +30,7 @@ const textEncoder = new TextEncoder();
 export default function ConnectPage() {
   const router = useRouter();
   const hasHydrated = useWalletStore((state) => state.hasHydrated);
+  const hasResolvedSession = useWalletStore((state) => state.hasResolvedSession);
   const isConnected = useWalletStore((state) => state.isConnected);
   const connectWallet = useWalletStore((state) => state.connectWallet);
   const setWalletSession = useWalletStore((state) => state.setWalletSession);
@@ -40,10 +41,10 @@ export default function ConnectPage() {
 
   // If already connected, redirect
   useEffect(() => {
-    if (hasHydrated && isConnected) {
+    if (hasHydrated && hasResolvedSession && isConnected) {
       router.replace("/dashboard");
     }
-  }, [hasHydrated, isConnected, router]);
+  }, [hasHydrated, hasResolvedSession, isConnected, router]);
 
   useEffect(() => {
     const referralParam = new URLSearchParams(window.location.search)
@@ -53,7 +54,7 @@ export default function ConnectPage() {
     setReferralCode(referralParam || undefined);
   }, []);
 
-  if (!hasHydrated || isConnected) {
+  if (!hasHydrated || !hasResolvedSession || isConnected) {
     return null;
   }
 

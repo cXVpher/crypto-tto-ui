@@ -9,6 +9,7 @@ import {
   TreeStructure,
 } from "@phosphor-icons/react";
 
+import { setAdminUserSuspensionAction } from "@/app/admin/dashboard-actions";
 import { AdminConfirmDialog } from "@/components/admin/admin-confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +27,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { adminActiveBondings, adminPurchases, adminSwaps, adminWithdrawals } from "@/lib/admin-mock-data";
 import { formatCompactNumber, formatTokenAmount, getStatusClasses } from "@/lib/admin-format";
 import { downloadCsvFile } from "@/lib/csv";
 import type { AdminUser, AdminUsersData } from "@/lib/admin-types";
@@ -159,9 +159,11 @@ export function UsersPage({ usersData }: UsersPageProps) {
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [confirmUserId, setConfirmUserId] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
+  const [pendingUserId, setPendingUserId] = useState<string | null>(null);
   const deferredSearch = useDeferredValue(search);
   const normalizedSearch = deferredSearch.trim().toLowerCase();
   const detailSide = useAdaptiveSheetSide();
+  const isMockMode = usersData.meta.source === "mock";
 
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
@@ -189,39 +191,73 @@ export function UsersPage({ usersData }: UsersPageProps) {
       return null;
     }
 
-    return {
-      bondings: adminActiveBondings.filter(
-        (item) => item.userWallet === selectedUser.walletAddress
-      ),
-      purchases: adminPurchases.filter((item) => item.user === selectedUser.username),
-      swaps: adminSwaps.filter((item) => item.user === selectedUser.username),
-      withdrawals: adminWithdrawals.filter((item) => item.user === selectedUser.username),
-    };
-  }, [selectedUser]);
-
-  const handleToggleUserStatus = (userId: string) => {
-    setUsers((currentUsers) =>
-      currentUsers.map((user) =>
-        user.id === userId
-          ? {
-              ...user,
-              status: user.status === "SUSPENDED" ? "ACTIVE" : "SUSPENDED",
-            }
-          : user
-      )
+    return (
+      usersData.contexts[selectedUser.id] ?? {
+        bondings: [],
+        purchases: [],
+        swaps: [],
+        withdrawals: [],
+      }
     );
+  }, [selectedUser, usersData.contexts]);
 
+  const handleToggleUserStatus = async (userId: string) => {
     const updatedUser = users.find((user) => user.id === userId);
 
     if (!updatedUser) {
       return;
     }
 
-    setNotice(
-      updatedUser.status === "SUSPENDED"
-        ? `${updatedUser.username} was restored to ACTIVE locally.`
-        : `${updatedUser.username} was moved to SUSPENDED locally.`
-    );
+    const shouldSuspend = updatedUser.status !== "SUSPENDED";
+
+    if (isMockMode) {
+      setUsers((currentUsers) =>
+        currentUsers.map((user) =>
+          user.id === userId
+            ? {
+                ...user,
+                status: shouldSuspend ? "SUSPENDED" : "ACTIVE",
+              }
+            : user
+        )
+      );
+
+      setNotice(
+        shouldSuspend
+          ? `${updatedUser.username} was moved to SUSPENDED locally.`
+          : `${updatedUser.username} was restored to ACTIVE locally.`
+      );
+      return;
+    }
+
+    try {
+      setPendingUserId(userId);
+      await setAdminUserSuspensionAction({
+        userId,
+        shouldSuspend,
+      });
+
+      setUsers((currentUsers) =>
+        currentUsers.map((user) =>
+          user.id === userId
+            ? {
+                ...user,
+                status: shouldSuspend ? "SUSPENDED" : "ACTIVE",
+              }
+            : user
+        )
+      );
+
+      setNotice(
+        shouldSuspend
+          ? `${updatedUser.username} was suspended via the admin API.`
+          : `${updatedUser.username} was restored via the admin API.`
+      );
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Unable to update the user.");
+    } finally {
+      setPendingUserId(null);
+    }
   };
 
   const userColumns: DataTableColumn<AdminUser>[] = [
@@ -279,6 +315,11 @@ export function UsersPage({ usersData }: UsersPageProps) {
           >
             {user.bondingStatus}
           </span>
+          {user.isAdmin ? (
+            <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-medium text-slate-200">
+              ADMIN
+            </span>
+          ) : null}
         </div>
       ),
     },
@@ -301,6 +342,7 @@ export function UsersPage({ usersData }: UsersPageProps) {
             type="button"
             variant="outline"
             onClick={() => setConfirmUserId(user.id)}
+            disabled={pendingUserId === user.id}
             className="h-10 rounded-2xl border-white/10 bg-white/5 text-slate-100 hover:bg-white/10"
           >
             {user.status === "SUSPENDED" ? (
@@ -308,7 +350,11 @@ export function UsersPage({ usersData }: UsersPageProps) {
             ) : (
               <PauseCircle className="size-4" />
             )}
-            {user.status === "SUSPENDED" ? "Unsuspend" : "Suspend"}
+            {pendingUserId === user.id
+              ? "Saving..."
+              : user.status === "SUSPENDED"
+                ? "Unsuspend"
+                : "Suspend"}
           </Button>
         </div>
       ),
@@ -411,6 +457,12 @@ export function UsersPage({ usersData }: UsersPageProps) {
           />
         </div>
 
+        {usersData.meta.notice ? (
+          <div className="mt-5 rounded-[1.5rem] border border-cyan-300/16 bg-cyan-300/10 px-4 py-3 text-sm text-cyan-50">
+            {usersData.meta.notice}
+          </div>
+        ) : null}
+
         <div className="mt-5">
           <DataTable
             data={filteredUsers}
@@ -473,6 +525,7 @@ export function UsersPage({ usersData }: UsersPageProps) {
                     type="button"
                     variant="outline"
                     onClick={() => setConfirmUserId(user.id)}
+                    disabled={pendingUserId === user.id}
                     className="h-11 flex-1 rounded-2xl border-white/10 bg-white/5 text-slate-100 hover:bg-white/10"
                   >
                     {user.status === "SUSPENDED" ? (
@@ -480,7 +533,11 @@ export function UsersPage({ usersData }: UsersPageProps) {
                     ) : (
                       <PauseCircle className="size-4" />
                     )}
-                    {user.status === "SUSPENDED" ? "Unsuspend" : "Suspend"}
+                    {pendingUserId === user.id
+                      ? "Saving..."
+                      : user.status === "SUSPENDED"
+                        ? "Unsuspend"
+                        : "Suspend"}
                   </Button>
                 </div>
               </article>
@@ -524,7 +581,7 @@ export function UsersPage({ usersData }: UsersPageProps) {
               <SheetHeader className="border-b border-white/8 pb-4">
                 <SheetTitle>{selectedUser.username}</SheetTitle>
                 <SheetDescription>
-                  Wallet {selectedUser.walletAddress} • {selectedUser.rank}
+                  Wallet {selectedUser.walletAddress} | {selectedUser.rank}
                 </SheetDescription>
               </SheetHeader>
               <div className="space-y-5 overflow-y-auto px-4 pb-6">
@@ -571,6 +628,26 @@ export function UsersPage({ usersData }: UsersPageProps) {
                       {selectedUser.referrals} referrals currently tied to this
                       wallet identity.
                     </p>
+                    <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
+                      <div>
+                        <p className="text-slate-500">TTO free</p>
+                        <p className="mt-1 text-slate-100">
+                          {formatTokenAmount(selectedUser.ttoBalance ?? 0)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-slate-500">TTO locked</p>
+                        <p className="mt-1 text-slate-100">
+                          {formatTokenAmount(selectedUser.ttoLocked ?? 0)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-slate-500">USDT</p>
+                        <p className="mt-1 text-slate-100">
+                          {formatCompactNumber(selectedUser.usdtBalance ?? 0)} USDT
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </section>
 
@@ -579,16 +656,23 @@ export function UsersPage({ usersData }: UsersPageProps) {
                     <div>
                       <p className="text-sm font-medium text-white">Bonding history</p>
                       <p className="mt-1 text-sm text-slate-400">
-                        Active and recent bondings surfaced from local mock data.
+                        {isMockMode
+                          ? "Active and recent bondings surfaced from local mock data."
+                          : "Live bonding records surfaced from the admin API."}
                       </p>
                     </div>
                     <Button
                       type="button"
                       variant="outline"
                       onClick={() => setConfirmUserId(selectedUser.id)}
+                      disabled={pendingUserId === selectedUser.id}
                       className="h-10 rounded-2xl border-white/10 bg-white/5 text-slate-100 hover:bg-white/10"
                     >
-                      {selectedUser.status === "SUSPENDED" ? "Unsuspend" : "Suspend"}
+                      {pendingUserId === selectedUser.id
+                        ? "Saving..."
+                        : selectedUser.status === "SUSPENDED"
+                          ? "Unsuspend"
+                          : "Suspend"}
                     </Button>
                   </div>
                   <div className="mt-4 space-y-3">
@@ -616,7 +700,11 @@ export function UsersPage({ usersData }: UsersPageProps) {
                         </article>
                       ))
                     ) : (
-                      <p className="text-sm text-slate-400">No bonding records in the mock set.</p>
+                      <p className="text-sm text-slate-400">
+                        {isMockMode
+                          ? "No bonding records in the mock set."
+                          : "No bonding records were returned by the admin API."}
+                      </p>
                     )}
                   </div>
                 </section>
@@ -645,6 +733,11 @@ export function UsersPage({ usersData }: UsersPageProps) {
                             <p className="mt-2 text-sm text-slate-300">{item.date}</p>
                           </article>
                         ))}
+                      {!isMockMode && selectedUserContext.swaps.length === 0 ? (
+                        <p className="text-sm text-slate-400">
+                          Swap history is not exposed by the current admin API.
+                        </p>
+                      ) : null}
                     </div>
                   </div>
                   <ReferralTreePreview user={selectedUser} />
@@ -665,14 +758,18 @@ export function UsersPage({ usersData }: UsersPageProps) {
         }
         description={
           confirmUser?.status === "SUSPENDED"
-            ? "This local admin action will mark the user as ACTIVE again in mock mode."
-            : "This local admin action will mark the user as SUSPENDED in mock mode."
+            ? isMockMode
+              ? "This local admin action will mark the user as ACTIVE again in mock mode."
+              : "This admin action will restore the user through the live admin API."
+            : isMockMode
+              ? "This local admin action will mark the user as SUSPENDED in mock mode."
+              : "This admin action will suspend the user through the live admin API."
         }
         confirmLabel={confirmUser?.status === "SUSPENDED" ? "Unsuspend user" : "Suspend user"}
         tone={confirmUser?.status === "SUSPENDED" ? "default" : "destructive"}
         onConfirm={() => {
           if (confirmUserId) {
-            handleToggleUserStatus(confirmUserId);
+            void handleToggleUserStatus(confirmUserId);
           }
         }}
       />

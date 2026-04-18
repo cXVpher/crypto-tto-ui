@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 
+import { updateAdminTokenPriceAction } from "@/app/admin/dashboard-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatPrice } from "@/lib/admin-format";
@@ -24,7 +25,38 @@ export function TokenPage({ tokenData }: TokenPageProps) {
   const [previewPrice, setPreviewPrice] = useState(
     tokenData.manualOverride ?? tokenData.currentPrice
   );
-  const [isPending, startTransition] = useTransition();
+  const [notice, setNotice] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const isMockMode = tokenData.meta.source === "mock";
+
+  const handleSavePrice = async () => {
+    const parsed = Number(priceInput);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      setNotice("Enter a valid positive price.");
+      return;
+    }
+
+    if (isMockMode) {
+      setPreviewPrice(parsed);
+      setNotice("Price preview updated locally.");
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      await updateAdminTokenPriceAction({ priceUsdt: parsed });
+      setPreviewPrice(parsed);
+      setNotice("Live token price updated via the admin API.");
+    } catch (error) {
+      setNotice(
+        error instanceof Error
+          ? error.message
+          : "Unable to update the live token price."
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -34,16 +66,22 @@ export function TokenPage({ tokenData }: TokenPageProps) {
             Current token price
           </p>
           <h2 className="mt-2 text-xl font-semibold text-white">
-            Mock price control panel
+            {isMockMode ? "Mock price control panel" : "Live price config"}
           </h2>
+          {tokenData.meta.notice ? (
+            <div className="mt-4 rounded-[1.5rem] border border-cyan-300/16 bg-cyan-300/10 px-4 py-3 text-sm text-cyan-50">
+              {tokenData.meta.notice}
+            </div>
+          ) : null}
           <div className="mt-6 rounded-[1.75rem] border border-cyan-300/16 bg-cyan-300/10 p-5">
             <p className="text-sm text-slate-300">Displayed price</p>
             <p className="mt-3 text-4xl font-semibold tracking-tight text-white">
               {formatPrice(previewPrice)}
             </p>
             <p className="mt-3 text-sm leading-6 text-slate-400">
-              Manual overrides are previewed locally in mock mode so the admin
-              screen behavior is testable without backend mutations.
+              {isMockMode
+                ? "Manual overrides are previewed locally in mock mode so the admin screen behavior is testable without backend mutations."
+                : "This control updates the live TTO price config exposed by the admin API."}
             </p>
           </div>
 
@@ -61,18 +99,21 @@ export function TokenPage({ tokenData }: TokenPageProps) {
             </div>
             <Button
               type="button"
-              onClick={() =>
-                startTransition(() => {
-                  const parsed = Number(priceInput);
-                  if (Number.isFinite(parsed) && parsed > 0) {
-                    setPreviewPrice(parsed);
-                  }
-                })
-              }
+              onClick={() => {
+                void handleSavePrice();
+              }}
+              disabled={isSaving}
               className="h-11 rounded-2xl bg-cyan-300 text-slate-950 hover:bg-cyan-200"
             >
-              {isPending ? "Updating..." : "Preview override"}
+              {isSaving
+                ? "Updating..."
+                : isMockMode
+                  ? "Preview override"
+                  : "Save live price"}
             </Button>
+            {notice ? (
+              <p className="text-sm text-cyan-100">{notice}</p>
+            ) : null}
           </div>
         </article>
 
@@ -107,6 +148,7 @@ export function TokenPage({ tokenData }: TokenPageProps) {
                 id="token-name"
                 value={name}
                 onChange={(event) => setName(event.target.value)}
+                disabled={!tokenData.capabilities.editMetadata}
                 className="mt-2 h-11 rounded-2xl border-white/10 bg-white/5"
               />
             </div>
@@ -118,6 +160,7 @@ export function TokenPage({ tokenData }: TokenPageProps) {
                 id="token-symbol"
                 value={symbol}
                 onChange={(event) => setSymbol(event.target.value.toUpperCase())}
+                disabled={!tokenData.capabilities.editMetadata}
                 className="mt-2 h-11 rounded-2xl border-white/10 bg-white/5"
               />
             </div>
@@ -130,12 +173,14 @@ export function TokenPage({ tokenData }: TokenPageProps) {
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
                 rows={5}
+                disabled={!tokenData.capabilities.editMetadata}
                 className="mt-2 w-full rounded-[1.5rem] border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-100 outline-none"
               />
             </div>
             <p className="text-sm leading-6 text-slate-400">
-              Mock mode keeps these edits local to the current session so the UI
-              flow can be validated before wiring backend endpoints.
+              {tokenData.capabilities.editMetadata
+                ? "Mock mode keeps these edits local to the current session so the UI flow can be validated before wiring backend endpoints."
+                : "Token metadata fields are read-only in live mode because the current admin API only exposes the TTO price config."}
             </p>
           </div>
         </article>
