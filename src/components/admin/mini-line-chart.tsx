@@ -15,7 +15,7 @@ export function MiniLineChart({
 }: MiniLineChartProps) {
   if (data.length === 0) {
     return (
-      <div className="flex h-[220px] items-center justify-center rounded-[1.75rem] border border-white/8 bg-[#081224]/80 text-sm text-slate-400">
+      <div className="flex h-[180px] items-center justify-center rounded-[1.75rem] border border-white/8 bg-[#081224]/80 text-sm text-slate-400 sm:h-[220px]">
         No chart data available.
       </div>
     );
@@ -41,7 +41,7 @@ export function MiniLineChart({
     <div className="overflow-hidden rounded-[1.75rem] border border-white/8 bg-[#081224]/80 p-4">
       <svg
         viewBox={`0 0 ${width} ${height}`}
-        className="h-[220px] w-full"
+        className="h-[180px] w-full sm:h-[220px]"
         role="img"
         aria-label="Trend chart"
       >

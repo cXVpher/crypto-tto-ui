@@ -1,12 +1,21 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Fire } from "@phosphor-icons/react";
-import type { BondingPackage } from "@/lib/api-service";
+import {
+  BROWSER_API_PROXY_BASE_URL,
+  getWalletSessionData,
+  startBonding,
+  type BondingPackage,
+} from "@/lib/api-service";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { TOKEN_SYMBOL } from "@/lib/mock-data";
 import { formatBalance } from "@/lib/utils";
+import { useWalletStore } from "@/store/use-wallet-store";
+
+const USE_MOCK_API = process.env.NEXT_PUBLIC_USE_MOCK_API === "true";
 
 interface AddBondingFormProps {
   packages: BondingPackage[];
@@ -17,6 +26,8 @@ export function AddBondingForm({
   packages,
   preselectedPackage,
 }: AddBondingFormProps) {
+  const router = useRouter();
+  const setWalletSession = useWalletStore((state) => state.setWalletSession);
   const fallbackPackageId = String(packages[1]?.id ?? packages[0]?.id ?? "");
   const [selectedPackage, setSelectedPackage] = useState(() => {
     const initialPackage = preselectedPackage || fallbackPackageId;
@@ -26,6 +37,8 @@ export function AddBondingForm({
   });
   const [amount, setAmount] = useState("50000");
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const pkg = packages.find((item) => String(item.id) === selectedPackage);
   const minimumAmount = pkg?.minAmount ?? 0;
@@ -47,16 +60,46 @@ export function AddBondingForm({
   function handleAmountChange(value: string) {
     setAmount(value);
     if (isSubmitted) setIsSubmitted(false);
+    if (submitError) setSubmitError("");
   }
 
   function handlePackageChange(value: string) {
     setSelectedPackage(value);
     if (isSubmitted) setIsSubmitted(false);
+    if (submitError) setSubmitError("");
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (!isValidAmount) return;
-    setIsSubmitted(true);
+
+    if (USE_MOCK_API) {
+      setSubmitError("");
+      setIsSubmitted(true);
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError("");
+
+    try {
+      await startBonding(selectedPackage, parsedAmount, {
+        baseURL: BROWSER_API_PROXY_BASE_URL,
+      });
+      const session = await getWalletSessionData();
+
+      setWalletSession(session);
+      setIsSubmitted(true);
+      router.push("/bonding");
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : "Unable to create the bonding contract."
+      );
+      setIsSubmitted(false);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -158,10 +201,13 @@ export function AddBondingForm({
           <FormFeedback variant="error">{validationMessage}</FormFeedback>
         ) : null}
 
-        {isSubmitted ? (
+        {submitError ? (
+          <FormFeedback variant="error">{submitError}</FormFeedback>
+        ) : isSubmitted ? (
           <FormFeedback variant="success">
-            Bonding contract draft is ready. You can connect backend creation to
-            this confirmation state later.
+            {USE_MOCK_API
+              ? "Bonding contract draft is ready. You can connect backend creation to this confirmation state later."
+              : "Bonding contract created successfully. Your locked balance and active contracts have been refreshed."}
           </FormFeedback>
         ) : (
           <FormFeedback>
@@ -173,8 +219,8 @@ export function AddBondingForm({
         <motion.button
           whileTap={{ scale: 0.98 }}
           className="btn-gold mt-4 w-full rounded-xl py-3.5 text-sm font-bold tracking-wide disabled:cursor-not-allowed disabled:opacity-60"
-          onClick={handleSubmit}
-          disabled={!isValidAmount}
+          onClick={() => void handleSubmit()}
+          disabled={!isValidAmount || isSubmitting}
           style={{
             background:
               "linear-gradient(135deg, rgba(126,194,255,0.62) 0%, rgba(75,125,232,0.82) 100%)",
@@ -183,7 +229,7 @@ export function AddBondingForm({
             color: "#ffffff",
           }}
         >
-          Create Contract
+          {isSubmitting ? "Creating..." : "Create Contract"}
         </motion.button>
       </motion.div>
     </div>

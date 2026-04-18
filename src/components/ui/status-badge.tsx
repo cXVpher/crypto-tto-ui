@@ -13,7 +13,10 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
     RUNNING: "bg-cash/20 text-cash border-cash/30",
     COMPLETED: "bg-gold/20 text-gold border-gold/30",
     PENDING: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+    PROCESSING: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
     FAILED: "bg-destructive/20 text-destructive border-destructive/30",
+    BONDING: "bg-cash/20 text-cash border-cash/30",
+    "NOT BONDING": "bg-white/10 text-slate-300 border-white/15",
   };
 
   return (

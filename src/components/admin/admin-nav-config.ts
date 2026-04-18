@@ -53,3 +53,11 @@ export const adminNavItems = [
 ] as const;
 
 export const adminBottomNavItems = adminNavItems.slice(0, 4);
+
+export function isAdminNavItemActive(pathname: string, href: string) {
+  if (href === "/admin") {
+    return pathname === href;
+  }
+
+  return pathname === href || pathname.startsWith(`${href}/`);
+}

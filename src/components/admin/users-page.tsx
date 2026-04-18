@@ -13,6 +13,13 @@ import { AdminConfirmDialog } from "@/components/admin/admin-confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Sheet,
   SheetContent,
   SheetDescription,
@@ -42,6 +49,16 @@ interface UserFiltersProps {
   ranks: string[];
 }
 
+const userStatusOptions = [
+  { value: "ALL", label: "All statuses" },
+  { value: "ACTIVE", label: "Active" },
+  { value: "SUSPENDED", label: "Suspended" },
+  { value: "REVIEW", label: "Review" },
+  { value: "RUNNING", label: "Running bonding" },
+  { value: "IDLE", label: "Idle bonding" },
+  { value: "ENDED", label: "Ended bonding" },
+] as const;
+
 function UserFilters({
   search,
   onSearchChange,
@@ -59,31 +76,45 @@ function UserFilters({
         placeholder="Search by username or wallet address"
         className="h-11 rounded-2xl border-white/10 bg-white/5"
       />
-      <select
+      <Select
         value={statusFilter}
-        onChange={(event) => onStatusFilterChange(event.target.value)}
-        className="h-11 rounded-2xl border border-white/10 bg-white/5 px-4 text-sm text-slate-100 outline-none"
+        onValueChange={(value) => {
+          if (value) {
+            onStatusFilterChange(value);
+          }
+        }}
       >
-        <option value="ALL">All statuses</option>
-        <option value="ACTIVE">Active</option>
-        <option value="SUSPENDED">Suspended</option>
-        <option value="REVIEW">Review</option>
-        <option value="RUNNING">Running bonding</option>
-        <option value="IDLE">Idle bonding</option>
-        <option value="ENDED">Ended bonding</option>
-      </select>
-      <select
+        <SelectTrigger className="h-11 w-full rounded-2xl border-white/10 bg-white/5 px-4 text-sm text-slate-100">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent className="rounded-2xl border border-white/10 bg-[#081224] text-slate-100">
+          {userStatusOptions.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Select
         value={rankFilter}
-        onChange={(event) => onRankFilterChange(event.target.value)}
-        className="h-11 rounded-2xl border border-white/10 bg-white/5 px-4 text-sm text-slate-100 outline-none"
+        onValueChange={(value) => {
+          if (value) {
+            onRankFilterChange(value);
+          }
+        }}
       >
-        <option value="ALL">All ranks</option>
-        {ranks.map((rank) => (
-          <option key={rank} value={rank}>
-            {rank}
-          </option>
-        ))}
-      </select>
+        <SelectTrigger className="h-11 w-full rounded-2xl border-white/10 bg-white/5 px-4 text-sm text-slate-100">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent className="rounded-2xl border border-white/10 bg-[#081224] text-slate-100">
+          <SelectItem value="ALL">All ranks</SelectItem>
+          {ranks.map((rank) => (
+            <SelectItem key={rank} value={rank}>
+              {rank}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }

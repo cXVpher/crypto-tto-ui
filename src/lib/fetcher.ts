@@ -1,3 +1,5 @@
+import { buildBackendApiUrl } from "@/lib/backend-url";
+
 type QueryValue =
   | string
   | number
@@ -62,14 +64,20 @@ function joinUrl(baseURL: string | undefined, url: string) {
     return url;
   }
 
-  const normalizedBase = (baseURL ?? process.env.NEXT_PUBLIC_API_URL ?? "").replace(
-    /\/+$/,
-    ""
-  );
+  const configuredBaseUrl = baseURL ?? process.env.NEXT_PUBLIC_API_URL ?? "";
+  const normalizedBase = configuredBaseUrl.replace(/\/+$/, "");
   const normalizedPath = url.replace(/^\/+/, "");
+
+  if (baseURL === undefined && (!normalizedBase || /^https?:\/\//i.test(normalizedBase))) {
+    return buildBackendApiUrl(normalizedPath, normalizedBase);
+  }
 
   if (!normalizedBase) {
     return normalizedPath ? `/${normalizedPath}` : "/";
+  }
+
+  if (/^https?:\/\//i.test(normalizedBase)) {
+    return buildBackendApiUrl(normalizedPath, normalizedBase);
   }
 
   return normalizedPath ? `${normalizedBase}/${normalizedPath}` : normalizedBase;

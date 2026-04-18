@@ -3,6 +3,7 @@
 import { Handshake } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "framer-motion";
 import type { NetworkAffiliateLevel } from "@/lib/api-service";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { TOKEN_SYMBOL } from "@/lib/mock-data";
 import { formatBalance } from "@/lib/utils";
 
@@ -80,15 +81,18 @@ function AffiliatePanel({ affiliates }: { affiliates: NetworkAffiliateLevel[] })
                     className="whitespace-nowrap text-[10px] font-bold"
                     style={{ color: "#f5c451" }}
                   >
-                    {formatBalance(wallet.bonding)} {TOKEN_SYMBOL}
+                    {formatBalance(wallet.bonusTto)} {TOKEN_SYMBOL}
                   </span>
                 </div>
                 <p className="text-[9px]" style={{ color: "#98abd4" }}>
                   Invite Date: {wallet.inviteDate}
                 </p>
-                <p className="mt-0.5 text-[10px]" style={{ color: "#98abd4" }}>
-                  BONDING
-                </p>
+                <div className="mt-2 flex items-center justify-between gap-3">
+                  <p className="text-[10px]" style={{ color: "#98abd4" }}>
+                    Referral Bonus
+                  </p>
+                  <StatusBadge status={wallet.status} className="shrink-0" />
+                </div>
               </motion.div>
             ))}
           </div>

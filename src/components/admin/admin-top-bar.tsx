@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { CalendarBlank, List, SignOut } from "@phosphor-icons/react";
+import { CalendarBlank, SignOut } from "@phosphor-icons/react";
 
 import { logoutAdminAction } from "@/app/admin/actions";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { adminNavItems } from "./admin-nav-config";
 
 interface AdminTopBarProps {
-  onOpenSidebar: () => void;
+  compactFrame?: boolean;
 }
 
 function getTitleFromPathname(pathname: string) {
@@ -25,24 +25,20 @@ function getTitleFromPathname(pathname: string) {
   );
 }
 
-export function AdminTopBar({ onOpenSidebar }: AdminTopBarProps) {
+export function AdminTopBar({ compactFrame = false }: AdminTopBarProps) {
   const pathname = usePathname();
   const currentItem = getTitleFromPathname(pathname) ?? adminNavItems[0];
 
   return (
     <header className="sticky top-0 z-30 border-b border-white/8 bg-[#050810]/80 backdrop-blur-xl">
-      <div className="flex min-h-18 items-center gap-3 px-4 py-3 md:px-6 lg:px-8">
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          onClick={onOpenSidebar}
-          className="rounded-2xl border-white/10 bg-white/5 text-slate-100 hover:bg-white/10 lg:hidden"
-        >
-          <List className="size-5" />
-          <span className="sr-only">Open navigation</span>
-        </Button>
-
+      <div
+        className={cn(
+          "flex min-h-18 items-center gap-3 py-3",
+          compactFrame
+            ? "mx-auto w-full max-w-[430px] px-4 lg:max-w-none lg:px-8"
+            : "px-4 md:px-6 lg:px-8"
+        )}
+      >
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-lg font-semibold tracking-tight text-white md:text-xl">
@@ -57,7 +53,12 @@ export function AdminTopBar({ onOpenSidebar }: AdminTopBarProps) {
           </p>
         </div>
 
-        <div className="hidden items-center gap-2 md:flex">
+        <div
+          className={cn(
+            "hidden items-center gap-2",
+            compactFrame ? "lg:flex" : "md:flex"
+          )}
+        >
           <div className="rounded-2xl border border-white/8 bg-white/5 px-3 py-2 text-right">
             <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">
               Session mode

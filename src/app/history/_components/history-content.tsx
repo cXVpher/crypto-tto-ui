@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Clock } from "@phosphor-icons/react";
 import type { PurchaseHistoryItem, WithdrawHistoryItem } from "@/lib/api-service";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { formatBalance } from "@/lib/utils";
 
 interface HistoryContentProps {
@@ -46,16 +47,7 @@ function PurchasePanel({ purchaseHistory }: { purchaseHistory: PurchaseHistoryIt
             <span className="text-xs font-bold" style={{ color: "#f5c451" }}>
               {formatBalance(item.amount)} {item.token}
             </span>
-            <span
-              className="rounded-full border px-2 py-0.5 text-[10px] font-bold"
-              style={{
-                background: "rgba(74,222,128,0.12)",
-                color: "#4ade80",
-                borderColor: "rgba(74,222,128,0.2)",
-              }}
-            >
-              {item.status}
-            </span>
+            <StatusBadge status={item.status} />
           </div>
           <div className="flex items-center justify-between gap-3">
             <span className="text-[11px]" style={{ color: "#98abd4" }}>
@@ -93,16 +85,7 @@ function WithdrawPanel({ withdrawHistory }: { withdrawHistory: WithdrawHistoryIt
             <span className="text-xs font-bold" style={{ color: "#f5c451" }}>
               {formatBalance(item.amount)} {item.token}
             </span>
-            <span
-              className="rounded-full border px-2 py-0.5 text-[10px] font-bold"
-              style={{
-                background: "rgba(74,222,128,0.12)",
-                color: "#4ade80",
-                borderColor: "rgba(74,222,128,0.2)",
-              }}
-            >
-              {item.status}
-            </span>
+            <StatusBadge status={item.status} />
           </div>
           <div className="space-y-1.5">
             <span className="block text-[11px]" style={{ color: "#98abd4" }}>

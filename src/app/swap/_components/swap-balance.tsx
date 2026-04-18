@@ -1,11 +1,15 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { TOKEN_SYMBOL, TOKEN_PRICE_USDT } from "@/lib/mock-data";
+import { TOKEN_SYMBOL } from "@/lib/mock-data";
 import { formatBalance } from "@/lib/utils";
 import { useWalletStore } from "@/store/use-wallet-store";
 
-export function SwapBalance() {
+interface SwapBalanceProps {
+  priceUsdt: number;
+}
+
+export function SwapBalance({ priceUsdt }: SwapBalanceProps) {
   const balance = useWalletStore((state) => state.balance);
 
   return (
@@ -34,7 +38,7 @@ export function SwapBalance() {
           </p>
         </div>
         <p className="text-xs font-semibold" style={{ color: "#f5c451" }}>
-          ~${formatBalance(balance * TOKEN_PRICE_USDT)}
+          ~${formatBalance(balance * priceUsdt)}
         </p>
       </div>
     </motion.div>

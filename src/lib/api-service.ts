@@ -15,6 +15,12 @@ import {
 const MOCK_DELAY_MS = 250;
 const USE_MOCK_API = process.env.NEXT_PUBLIC_USE_MOCK_API === "true";
 
+export const BROWSER_API_PROXY_BASE_URL = "/api/backend";
+
+export interface ApiRequestOptions {
+  baseURL?: string;
+}
+
 export interface TokenConfig {
   name: string;
   symbol: string;
@@ -51,8 +57,9 @@ export interface BondingData {
 
 export interface NetworkAffiliateWallet {
   address: string;
-  bonding: number;
+  bonusTto: number;
   inviteDate: string;
+  status: string;
 }
 
 export interface NetworkAffiliateLevel {
@@ -65,6 +72,30 @@ export interface NetworkData {
   affiliates: NetworkAffiliateLevel[];
 }
 
+export interface SwapRateConfig {
+  ttoPriceUsdt: number;
+  priceSource: string;
+  feePercentage: number;
+  minimumTto: number;
+}
+
+export interface SwapQuoteData extends SwapRateConfig {
+  ttoAmount: number;
+  grossUsdt: number;
+  feeTto: number;
+  feeUsdt: number;
+  netUsdt: number;
+}
+
+export interface SwapExecutionResult {
+  swapId: string;
+  ttoAmount: number;
+  feeTto: number;
+  netUsdt: number;
+  newUsdtBalance: number;
+  status: string;
+}
+
 export interface SwapHistoryItem {
   id: string | number;
   fromAmount: number;
@@ -72,6 +103,23 @@ export interface SwapHistoryItem {
   toAmount: number;
   toToken: string;
   date: string;
+  status: string;
+}
+
+export interface DepositPriceData {
+  ttoPriceUsdt: number;
+  priceSource: string;
+}
+
+export interface DepositQuoteData extends DepositPriceData {
+  phaseId: string;
+  usdtAmount: number;
+  ttoReceive: number;
+  remainingAllocationTto: number;
+}
+
+export interface DepositConfirmationResult {
+  depositId: string;
   status: string;
 }
 
@@ -83,6 +131,23 @@ export interface PurchaseHistoryItem {
   receivedToken: string;
   date: string;
   status: string;
+}
+
+export interface WithdrawQuoteData {
+  requestedUsdt: number;
+  networkFeeUsdt: number;
+  youReceiveUsdt: number;
+  recipientAddress: string;
+}
+
+export interface WithdrawSubmissionResult {
+  withdrawId: string;
+  usdtAmount: number;
+  networkFeeUsdt: number;
+  netUsdt: number;
+  recipientAddress: string;
+  status: string;
+  message: string;
 }
 
 export interface WithdrawHistoryItem {
@@ -109,7 +174,40 @@ export interface ProfileData {
   version: string;
 }
 
-export interface ApiAuthOptions {
+export interface WalletSessionData {
+  walletAddress: string;
+  username: string;
+  balance: number;
+  privateBonding: number;
+  usdtBalance: number;
+}
+
+export interface AuthChallengeData {
+  challenge: string;
+  expiresAt: string;
+}
+
+export interface AuthVerifyResult {
+  accessToken: string;
+  wallet: string;
+  expiresIn: number;
+  isNewUser: boolean;
+}
+
+export interface BondingStartResult {
+  bondingId: string;
+  packageId: string;
+  packageLabel: string;
+  principalTto: number;
+  dailyRate: number;
+  dailyProfitTto: number;
+  durationDays: number;
+  startDate: string;
+  endDate: string;
+  totalProjectedProfit: number;
+}
+
+export interface ApiAuthOptions extends ApiRequestOptions {
   accessToken?: string;
 }
 
@@ -131,14 +229,25 @@ async function resolveMock<T>(value: T) {
   return cloneData(value);
 }
 
-function requireAccessToken(accessToken?: string) {
-  if (!accessToken) {
-    throw new Error(
-      "An access token is required when NEXT_PUBLIC_USE_MOCK_API=false."
-    );
+function canUseProxyAuth(baseURL?: string) {
+  return typeof baseURL === "string" && baseURL.startsWith("/");
+}
+
+function resolveAuth(options: ApiAuthOptions = {}) {
+  if (options.accessToken) {
+    return {
+      type: "bearer" as const,
+      token: options.accessToken,
+    };
   }
 
-  return accessToken;
+  if (canUseProxyAuth(options.baseURL)) {
+    return undefined;
+  }
+
+  throw new Error(
+    "An access token is required when NEXT_PUBLIC_USE_MOCK_API=false."
+  );
 }
 
 function toNumber(value: unknown, fallback = 0) {
@@ -202,6 +311,19 @@ function formatLevelLabel(level: number) {
   return `LV-${String(level).padStart(2, "0")}`;
 }
 
+function formatStatusLabel(value: unknown, fallback = "Pending") {
+  const status = toString(value, fallback)
+    .replace(/[_-]+/g, " ")
+    .trim()
+    .toLowerCase();
+
+  if (!status) {
+    return fallback;
+  }
+
+  return status.replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
 export function getTokenConfig(): TokenConfig {
   return {
     name: TOKEN_NAME,
@@ -210,25 +332,58 @@ export function getTokenConfig(): TokenConfig {
   };
 }
 
-export async function getDashboardData(): Promise<DashboardData> {
+export async function getSwapRateData(
+  options: ApiRequestOptions = {}
+): Promise<SwapRateConfig> {
+  if (USE_MOCK_API) {
+    return resolveMock({
+      ttoPriceUsdt: TOKEN_PRICE_USDT,
+      priceSource: "mock",
+      feePercentage: 1,
+      minimumTto: 10,
+    });
+  }
+
+  const rate = await fetchApi<{
+    ttoPriceUsdt?: number;
+    priceSource?: string;
+    feePercentage?: number;
+    minimumTto?: number;
+  }>("/v1/swap/rate", {
+    baseURL: options.baseURL,
+  });
+
+  return {
+    ttoPriceUsdt: toNumber(rate.ttoPriceUsdt, TOKEN_PRICE_USDT),
+    priceSource: toString(rate.priceSource, "market"),
+    feePercentage: toNumber(rate.feePercentage, 1),
+    minimumTto: toNumber(rate.minimumTto, 10),
+  };
+}
+
+export async function getDashboardData(
+  options: ApiRequestOptions = {}
+): Promise<DashboardData> {
   if (USE_MOCK_API) {
     return resolveMock({
       token: getTokenConfig(),
     });
   }
 
-  const rate = await fetchApi<{ symbol?: string; price?: number }>("/v1/swap/rate");
+  const rate = await getSwapRateData(options);
 
   return {
     token: {
       name: TOKEN_NAME,
-      symbol: toString(rate.symbol, TOKEN_SYMBOL),
-      priceUsdt: toNumber(rate.price, TOKEN_PRICE_USDT),
+      symbol: TOKEN_SYMBOL,
+      priceUsdt: rate.ttoPriceUsdt,
     },
   };
 }
 
-export async function getBondingPackages(): Promise<BondingPackage[]> {
+export async function getBondingPackages(
+  options: ApiRequestOptions = {}
+): Promise<BondingPackage[]> {
   if (USE_MOCK_API) {
     return resolveMock(bondingPackages as BondingPackage[]);
   }
@@ -237,6 +392,7 @@ export async function getBondingPackages(): Promise<BondingPackage[]> {
     Array<{
       id?: string | number;
       packageId?: string;
+      label?: string;
       name?: string;
       days?: number;
       durationDays?: number;
@@ -245,72 +401,97 @@ export async function getBondingPackages(): Promise<BondingPackage[]> {
       minAmount?: number;
       minTtoAmount?: number;
     }>
-  >("/v1/bonding/packages");
+  >("/v1/bonding/packages", {
+    baseURL: options.baseURL,
+  });
 
   return packages.map((item, index) => {
     const fallbackDays = toNumber(item.packageId?.replace(/\D/g, ""), index + 1);
     const days = toNumber(item.days ?? item.durationDays, fallbackDays);
+    const dailyRate = toNumber(item.dailyRate);
 
     return {
       id: item.id ?? item.packageId ?? index + 1,
-      name: toString(item.name, `${days} Days Pack`),
+      name: toString(item.name ?? item.label, `${days} Days Pack`),
       days,
-      dailyProfit: toNumber(
-        item.dailyProfit,
-        toNumber(item.dailyRate) > 0 ? toNumber(item.dailyRate) * 100 : 0
-      ),
-      minAmount: toNumber(item.minAmount ?? item.minTtoAmount),
-      icon: "🔥",
+      dailyProfit: toNumber(item.dailyProfit, dailyRate > 0 ? dailyRate * 100 : 0),
+      minAmount: toNumber(item.minAmount ?? item.minTtoAmount, 100),
+      icon: "fire",
     };
   });
 }
 
 export async function getMyBondingList(
-  options: ApiAuthOptions = {}
+  options: PaginationOptions = {}
 ): Promise<BondingItem[]> {
   if (USE_MOCK_API) {
     return resolveMock(myBondingList as BondingItem[]);
   }
 
-  const accessToken = requireAccessToken(options.accessToken);
-  const activeBondings = await fetchApi<
+  const auth = resolveAuth(options);
+  const bondingHistory = await fetchApi<
     Array<{
       id?: string | number;
+      packageLabel?: string;
       packageName?: string;
       packageId?: string;
-      packageLabel?: string;
+      principalTto?: number;
       amount?: number;
       ttoAmount?: number;
-      token?: string;
       status?: string;
       startDate?: string;
       startedAt?: string;
       endDate?: string;
       endsAt?: string;
     }>
-  >("/v1/bonding/active", {
-    auth: { type: "bearer", token: accessToken },
+  >("/v1/bonding/history", {
+    baseURL: options.baseURL,
+    auth,
+    query: {
+      page: options.page ?? 1,
+      limit: options.limit ?? 100,
+    },
   });
 
-  return activeBondings.map((item, index) => ({
-    id: item.id ?? index + 1,
-    packageName: toString(
-      item.packageName ?? item.packageLabel ?? item.packageId,
-      "Bonding Package"
-    ),
-    amount: toNumber(item.amount ?? item.ttoAmount),
-    token: toString(item.token, TOKEN_SYMBOL),
-    status: toString(item.status, "RUNNING").toUpperCase(),
-    startDate: formatDate(item.startDate ?? item.startedAt),
-    endDate: formatDate(item.endDate ?? item.endsAt),
-  }));
+  return bondingHistory
+    .filter((item) => toString(item.status).toUpperCase() === "RUNNING")
+    .map((item, index) => ({
+      id: item.id ?? index + 1,
+      packageName: toString(
+        item.packageName ?? item.packageLabel ?? item.packageId,
+        "Bonding Package"
+      ),
+      amount: toNumber(item.amount ?? item.principalTto ?? item.ttoAmount),
+      token: TOKEN_SYMBOL,
+      status: formatStatusLabel(item.status, "Running"),
+      startDate: formatDate(item.startDate ?? item.startedAt),
+      endDate: formatDate(item.endDate ?? item.endsAt),
+    }));
+}
+
+export async function startBonding(
+  packageId: string,
+  ttoAmount: number,
+  options: ApiAuthOptions = {}
+): Promise<BondingStartResult> {
+  const auth = resolveAuth(options);
+
+  return fetchApi<BondingStartResult>("/v1/bonding/start", {
+    baseURL: options.baseURL,
+    method: "POST",
+    auth,
+    body: {
+      packageId,
+      ttoAmount,
+    },
+  });
 }
 
 export async function getBondingData(
-  options: ApiAuthOptions = {}
+  options: PaginationOptions = {}
 ): Promise<BondingData> {
   const [packages, activeItems] = await Promise.all([
-    getBondingPackages(),
+    getBondingPackages(options),
     getMyBondingList(options),
   ]);
 
@@ -329,52 +510,87 @@ export async function getNetworkData(
     });
   }
 
-  const accessToken = requireAccessToken(options.accessToken);
-  const tree = await fetchApi<
-    Array<{
+  const auth = resolveAuth(options);
+  const tree = await fetchApi<{
+    levels?: Array<{
       level?: number;
       label?: string;
+      members?: Array<{
+        walletAddress?: string;
+        inviteDate?: string;
+        ttoBonus?: number;
+        status?: string;
+      }>;
       wallets?: Array<{
         address?: string;
-        wallet?: string;
-        bonding?: number;
-        totalBonding?: number;
         inviteDate?: string;
-        createdAt?: string;
+        ttoBonus?: number;
+        status?: string;
       }>;
-      members?: Array<{
-        address?: string;
-        wallet?: string;
-        bonding?: number;
-        totalBonding?: number;
-        inviteDate?: string;
-        createdAt?: string;
-      }>;
-    }>
-  >("/v1/referral/tree", {
-    auth: { type: "bearer", token: accessToken },
+    }>;
+  }>("/v1/referral/tree", {
+    baseURL: options.baseURL,
+    auth,
     query: {
       page: options.page ?? 1,
       limit: options.limit ?? 20,
     },
   });
 
+  const levels = tree.levels ?? [];
+
   return {
-    affiliates: tree.map((level, index) => {
+    affiliates: levels.map((level, index) => {
       const levelNumber = toNumber(level.level, index + 1);
-      const members = level.wallets ?? level.members ?? [];
+      const members = level.members ?? level.wallets ?? [];
 
       return {
         level: levelNumber,
         label: toString(level.label, formatLevelLabel(levelNumber)),
         wallets: members.map((wallet) => ({
-          address: toString(wallet.address ?? wallet.wallet),
-          bonding: toNumber(wallet.bonding ?? wallet.totalBonding),
-          inviteDate: formatDateTime(wallet.inviteDate ?? wallet.createdAt),
+          address: toString(
+            (wallet as { walletAddress?: string }).walletAddress ??
+              (wallet as { address?: string }).address
+          ),
+          bonusTto: toNumber(wallet.ttoBonus),
+          inviteDate: formatDateTime(wallet.inviteDate),
+          status: formatStatusLabel(wallet.status, "Not Bonding"),
         })),
       };
     }),
   };
+}
+
+export async function getSwapQuote(
+  ttoAmount: number,
+  options: ApiAuthOptions = {}
+): Promise<SwapQuoteData> {
+  const auth = resolveAuth(options);
+
+  return fetchApi<SwapQuoteData>("/v1/swap/quote", {
+    baseURL: options.baseURL,
+    method: "POST",
+    auth,
+    body: {
+      ttoAmount,
+    },
+  });
+}
+
+export async function executeSwap(
+  ttoAmount: number,
+  options: ApiAuthOptions = {}
+): Promise<SwapExecutionResult> {
+  const auth = resolveAuth(options);
+
+  return fetchApi<SwapExecutionResult>("/v1/swap/execute", {
+    baseURL: options.baseURL,
+    method: "POST",
+    auth,
+    body: {
+      ttoAmount,
+    },
+  });
 }
 
 export async function getSwapHistoryData(
@@ -384,22 +600,25 @@ export async function getSwapHistoryData(
     return resolveMock(swapHistory as SwapHistoryItem[]);
   }
 
-  const accessToken = requireAccessToken(options.accessToken);
+  const auth = resolveAuth(options);
   const history = await fetchApi<
     Array<{
       id?: string | number;
       ttoAmount?: number;
       fromAmount?: number;
       fromToken?: string;
+      netUsdt?: number;
       usdtAmount?: number;
       toAmount?: number;
       toToken?: string;
       createdAt?: string;
+      completedAt?: string;
       date?: string;
       status?: string;
     }>
   >("/v1/swap/history", {
-    auth: { type: "bearer", token: accessToken },
+    baseURL: options.baseURL,
+    auth,
     query: {
       page: options.page ?? 1,
       limit: options.limit ?? 10,
@@ -410,11 +629,69 @@ export async function getSwapHistoryData(
     id: item.id ?? index + 1,
     fromAmount: toNumber(item.fromAmount ?? item.ttoAmount),
     fromToken: toString(item.fromToken, TOKEN_SYMBOL),
-    toAmount: toNumber(item.toAmount ?? item.usdtAmount),
+    toAmount: toNumber(item.toAmount ?? item.netUsdt ?? item.usdtAmount),
     toToken: toString(item.toToken, "USDT"),
-    date: formatDate(item.date ?? item.createdAt),
-    status: toString(item.status, "Completed"),
+    date: formatDate(item.completedAt ?? item.date ?? item.createdAt),
+    status: formatStatusLabel(item.status, "Completed"),
   }));
+}
+
+export async function getDepositPriceData(
+  options: ApiRequestOptions = {}
+): Promise<DepositPriceData> {
+  if (USE_MOCK_API) {
+    return resolveMock({
+      ttoPriceUsdt: TOKEN_PRICE_USDT,
+      priceSource: "mock",
+    });
+  }
+
+  const price = await fetchApi<{
+    price?: number;
+    source?: string;
+  }>("/v1/deposit/price", {
+    baseURL: options.baseURL,
+  });
+
+  return {
+    ttoPriceUsdt: toNumber(price.price, TOKEN_PRICE_USDT),
+    priceSource: toString(price.source, "market"),
+  };
+}
+
+export async function getDepositQuote(
+  usdtAmount: number,
+  options: ApiAuthOptions = {}
+): Promise<DepositQuoteData> {
+  const auth = resolveAuth(options);
+
+  return fetchApi<DepositQuoteData>("/v1/deposit/quote", {
+    baseURL: options.baseURL,
+    auth,
+    query: {
+      usdtAmount,
+    },
+  });
+}
+
+export async function confirmDeposit(
+  txHashPayment: string,
+  walletFrom: string,
+  usdtAmount: number,
+  options: ApiAuthOptions = {}
+): Promise<DepositConfirmationResult> {
+  const auth = resolveAuth(options);
+
+  return fetchApi<DepositConfirmationResult>("/v1/deposit/confirm", {
+    baseURL: options.baseURL,
+    method: "POST",
+    auth,
+    body: {
+      txHashPayment,
+      walletFrom,
+      usdtAmount,
+    },
+  });
 }
 
 export async function getPurchaseHistoryData(
@@ -424,21 +701,26 @@ export async function getPurchaseHistoryData(
     return resolveMock(purchaseHistory as PurchaseHistoryItem[]);
   }
 
-  const accessToken = requireAccessToken(options.accessToken);
+  const auth = resolveAuth(options);
   const history = await fetchApi<
     Array<{
       id?: string | number;
+      usdtAmount?: number;
       amount?: number;
-      token?: string;
+      ttoAmount?: number;
       received?: number;
       receivedAmount?: number;
+      token?: string;
       receivedToken?: string;
       status?: string;
       createdAt?: string;
+      verifiedAt?: string;
+      completedAt?: string;
       date?: string;
     }>
-  >("/v1/user/history", {
-    auth: { type: "bearer", token: accessToken },
+  >("/v1/deposit/history", {
+    baseURL: options.baseURL,
+    auth,
     query: {
       page: options.page ?? 1,
       limit: options.limit ?? 10,
@@ -447,13 +729,46 @@ export async function getPurchaseHistoryData(
 
   return history.map((item, index) => ({
     id: item.id ?? index + 1,
-    amount: toNumber(item.amount),
+    amount: toNumber(item.amount ?? item.usdtAmount),
     token: toString(item.token, "USDT"),
-    received: toNumber(item.received ?? item.receivedAmount),
+    received: toNumber(item.received ?? item.receivedAmount ?? item.ttoAmount),
     receivedToken: toString(item.receivedToken, TOKEN_SYMBOL),
-    date: formatDate(item.date ?? item.createdAt),
-    status: toString(item.status, "Completed"),
+    date: formatDate(item.completedAt ?? item.verifiedAt ?? item.date ?? item.createdAt),
+    status: formatStatusLabel(item.status, "Pending"),
   }));
+}
+
+export async function getWithdrawQuote(
+  amount: number,
+  options: ApiAuthOptions = {}
+): Promise<WithdrawQuoteData> {
+  const auth = resolveAuth(options);
+
+  return fetchApi<WithdrawQuoteData>("/v1/withdraw/quote", {
+    baseURL: options.baseURL,
+    auth,
+    query: {
+      amount,
+    },
+  });
+}
+
+export async function submitWithdraw(
+  usdtAmount: number,
+  recipientAddress: string,
+  options: ApiAuthOptions = {}
+): Promise<WithdrawSubmissionResult> {
+  const auth = resolveAuth(options);
+
+  return fetchApi<WithdrawSubmissionResult>("/v1/withdraw/submit", {
+    baseURL: options.baseURL,
+    method: "POST",
+    auth,
+    body: {
+      usdtAmount,
+      recipientAddress,
+    },
+  });
 }
 
 export async function getWithdrawHistoryData(
@@ -463,7 +778,7 @@ export async function getWithdrawHistoryData(
     return resolveMock(withdrawHistory as WithdrawHistoryItem[]);
   }
 
-  const accessToken = requireAccessToken(options.accessToken);
+  const auth = resolveAuth(options);
   const history = await fetchApi<
     Array<{
       id?: string | number;
@@ -474,12 +789,15 @@ export async function getWithdrawHistoryData(
       recipientAddress?: string;
       fee?: number;
       feeAmount?: number;
+      networkFeeUsdt?: number;
       createdAt?: string;
+      completedAt?: string;
       date?: string;
       status?: string;
     }>
   >("/v1/withdraw/history", {
-    auth: { type: "bearer", token: accessToken },
+    baseURL: options.baseURL,
+    auth,
     query: {
       page: options.page ?? 1,
       limit: options.limit ?? 10,
@@ -491,9 +809,9 @@ export async function getWithdrawHistoryData(
     amount: toNumber(item.amount ?? item.usdtAmount),
     token: toString(item.token, "USDT"),
     wallet: toString(item.wallet ?? item.recipientAddress),
-    fee: toNumber(item.fee ?? item.feeAmount),
-    date: formatDate(item.date ?? item.createdAt),
-    status: toString(item.status, "Completed"),
+    fee: toNumber(item.fee ?? item.feeAmount ?? item.networkFeeUsdt),
+    date: formatDate(item.completedAt ?? item.date ?? item.createdAt),
+    status: formatStatusLabel(item.status, "Processing"),
   }));
 }
 
@@ -518,44 +836,78 @@ export async function getProfileData(
     return resolveMock(userProfile as ProfileData);
   }
 
-  const accessToken = requireAccessToken(options.accessToken);
-  const [me, referralCode, titanStatus] = await Promise.all([
+  const auth = resolveAuth(options);
+  const [me, titanStatus] = await Promise.all([
     fetchApi<{
       username?: string;
-      wallet?: string;
-      createdAt?: string;
-      referredBy?: string;
-      referredByWallet?: string;
-    }>("/v1/auth/me", {
-      auth: { type: "bearer", token: accessToken },
-    }),
-    fetchApi<{
+      walletAddress?: string;
+      walletAddressFull?: string;
+      registeredSince?: string;
+      invitedByAddress?: string;
       affiliateLink?: string;
-    }>("/v1/referral/code", {
-      auth: { type: "bearer", token: accessToken },
+    }>("/v1/auth/me", {
+      baseURL: options.baseURL,
+      auth,
     }),
     fetchApi<{
-      levelName?: string;
-      currentLevelName?: string;
+      currentLevelLabel?: string;
       currentLevel?: number;
     }>("/v1/titan/status", {
-      auth: { type: "bearer", token: accessToken },
+      baseURL: options.baseURL,
+      auth,
     }),
   ]);
 
-  const fallbackWallet = toString(me.wallet);
+  const fallbackWallet = toString(me.walletAddressFull ?? me.walletAddress);
 
   return {
     username: toString(me.username, fallbackWallet || userProfile.username),
     rankLevel: toString(
-      titanStatus.currentLevelName ?? titanStatus.levelName,
+      titanStatus.currentLevelLabel,
       typeof titanStatus.currentLevel === "number"
-        ? `TITAN ${titanStatus.currentLevel}`
+        ? `Titan ${titanStatus.currentLevel}`
         : userProfile.rankLevel
     ),
-    registeredSince: formatDateTime(me.createdAt) || userProfile.registeredSince,
-    invitedBy: toString(me.referredByWallet ?? me.referredBy, userProfile.invitedBy),
-    affiliateLink: toString(referralCode.affiliateLink, userProfile.affiliateLink),
+    registeredSince:
+      formatDateTime(me.registeredSince) || userProfile.registeredSince,
+    invitedBy: toString(me.invitedByAddress, userProfile.invitedBy),
+    affiliateLink: toString(me.affiliateLink, userProfile.affiliateLink),
     version: userProfile.version,
   };
+}
+
+export async function getAuthChallenge(
+  wallet: string,
+  options: ApiRequestOptions = {}
+): Promise<AuthChallengeData> {
+  return fetchApi<AuthChallengeData>("/v1/auth/challenge", {
+    baseURL: options.baseURL,
+    query: {
+      wallet,
+    },
+  });
+}
+
+export async function verifyAuthSignature(
+  input: {
+    wallet: string;
+    signature: string;
+    challenge: string;
+    referralCode?: string;
+  },
+  options: ApiRequestOptions = {}
+): Promise<AuthVerifyResult> {
+  return fetchApi<AuthVerifyResult>("/v1/auth/verify", {
+    baseURL: options.baseURL,
+    method: "POST",
+    body: input,
+  });
+}
+
+export async function getWalletSessionData(
+  options: ApiRequestOptions = {}
+): Promise<WalletSessionData> {
+  return fetchApi<WalletSessionData>("/api/auth/session", {
+    baseURL: options.baseURL ?? "",
+  });
 }

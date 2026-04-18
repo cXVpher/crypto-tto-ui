@@ -1,5 +1,5 @@
 import { PageHeader } from "@/components/layout/page-header";
-import { getSwapHistoryData } from "@/lib/api-service";
+import { getSwapHistoryData, getSwapRateData } from "@/lib/api-service";
 import { getServerAccessToken } from "@/lib/server-auth";
 import { SwapBalance } from "./_components/swap-balance";
 import { SwapForm } from "./_components/swap-form";
@@ -9,9 +9,12 @@ const USE_MOCK_API = process.env.NEXT_PUBLIC_USE_MOCK_API === "true";
 
 export default async function SwapPage() {
   const accessToken = await getServerAccessToken();
-  const swapHistory = USE_MOCK_API || accessToken
-    ? await getSwapHistoryData({ accessToken })
-    : [];
+  const [rateConfig, swapHistory] = await Promise.all([
+    getSwapRateData(),
+    USE_MOCK_API || accessToken
+      ? getSwapHistoryData({ accessToken })
+      : Promise.resolve([]),
+  ]);
 
   return (
     <div
@@ -25,8 +28,12 @@ export default async function SwapPage() {
       <PageHeader title="Swap" />
 
       <div className="px-4 pt-4">
-        <SwapBalance />
-        <SwapForm />
+        <SwapBalance priceUsdt={rateConfig.ttoPriceUsdt} />
+        <SwapForm
+          feePercentage={rateConfig.feePercentage}
+          minimumTto={rateConfig.minimumTto}
+          tokenPriceUsdt={rateConfig.ttoPriceUsdt}
+        />
         <SwapHistoryList history={swapHistory} />
       </div>
     </div>

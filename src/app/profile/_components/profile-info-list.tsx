@@ -14,13 +14,16 @@ interface ProfileInfoListProps {
 export function ProfileInfoList({ profile }: ProfileInfoListProps) {
   const walletAddress = useWalletStore((state) => state.walletAddress);
   const { copiedKey, copyToClipboard } = useCopyFeedback();
+  const resolvedWalletAddress = walletAddress || "Not connected";
+  const invitedByAddress = profile.invitedBy || "No inviter";
+  const affiliateLink = profile.affiliateLink || "Unavailable";
 
   const infoFields = [
     {
       icon: Shield,
       label: "Wallet Address",
-      value: truncateAddress(walletAddress),
-      fullValue: walletAddress,
+      value: truncateAddress(resolvedWalletAddress),
+      fullValue: resolvedWalletAddress,
       copyable: true,
       iconColor: "#86cbff",
       iconBackground: "rgba(126,194,255,0.14)",
@@ -37,9 +40,9 @@ export function ProfileInfoList({ profile }: ProfileInfoListProps) {
     {
       icon: UserCheck,
       label: "Invited by Address",
-      value: truncateAddress(profile.invitedBy),
-      fullValue: profile.invitedBy,
-      copyable: true,
+      value: truncateAddress(invitedByAddress),
+      fullValue: invitedByAddress,
+      copyable: Boolean(profile.invitedBy),
       iconColor: "#6ee7b7",
       iconBackground: "rgba(110,231,183,0.12)",
       iconBorder: "rgba(110,231,183,0.18)",
@@ -47,8 +50,8 @@ export function ProfileInfoList({ profile }: ProfileInfoListProps) {
     {
       icon: Link,
       label: "User Affiliate Link",
-      value: `${profile.affiliateLink}${truncateAddress(walletAddress || profile.username)}`,
-      fullValue: `${profile.affiliateLink}${walletAddress || profile.username}`,
+      value: affiliateLink,
+      fullValue: affiliateLink,
       copyable: true,
       iconColor: "#c4b5fd",
       iconBackground: "rgba(196,181,253,0.12)",

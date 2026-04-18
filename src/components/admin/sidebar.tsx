@@ -8,7 +8,7 @@ import { logoutAdminAction } from "@/app/admin/actions";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-import { adminNavItems } from "./admin-nav-config";
+import { adminNavItems, isAdminNavItemActive } from "./admin-nav-config";
 
 interface SidebarProps {
   className?: string;
@@ -41,8 +41,7 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
       <nav className="flex-1 px-3 py-4">
         <div className="space-y-1.5">
           {adminNavItems.map((item) => {
-            const isActive =
-              pathname === item.href || pathname.startsWith(`${item.href}/`);
+            const isActive = isAdminNavItemActive(pathname, item.href);
             const Icon = item.icon;
 
             return (
@@ -77,7 +76,7 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
         </div>
       </nav>
 
-      <div className="border-t border-white/8 px-3 py-4">
+      <div className="mt-auto border-t border-white/8 px-3 py-4">
         <div className="rounded-3xl border border-white/8 bg-white/4 p-4">
           <p className="text-xs uppercase tracking-[0.24em] text-slate-500">
             Session

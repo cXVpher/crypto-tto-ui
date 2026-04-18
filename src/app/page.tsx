@@ -6,19 +6,37 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Wallet } from "@phosphor-icons/react";
 import { useWalletStore } from "@/store/use-wallet-store";
+import {
+  BROWSER_API_PROXY_BASE_URL,
+  getAuthChallenge,
+  getWalletSessionData,
+  verifyAuthSignature,
+} from "@/lib/api-service";
+import { encodeBase58 } from "@/lib/base58";
+import {
+  getProviderSignature,
+  getProviderWalletAddress,
+  getSolanaProvider,
+} from "@/lib/solana-provider";
 import { HeroSection } from "./_components/hero-section";
 import { FeaturesList } from "./_components/features-list";
 import { ConnectModal } from "./_components/connect-modal";
 
 type ModalStep = "idle" | "connecting" | "approving" | "success";
 
+const USE_MOCK_API = process.env.NEXT_PUBLIC_USE_MOCK_API === "true";
+const textEncoder = new TextEncoder();
+
 export default function ConnectPage() {
   const router = useRouter();
   const hasHydrated = useWalletStore((state) => state.hasHydrated);
   const isConnected = useWalletStore((state) => state.isConnected);
   const connectWallet = useWalletStore((state) => state.connectWallet);
+  const setWalletSession = useWalletStore((state) => state.setWalletSession);
   const [modalOpen, setModalOpen] = useState(false);
   const [step, setStep] = useState<ModalStep>("idle");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [referralCode, setReferralCode] = useState<string>();
 
   // If already connected, redirect
   useEffect(() => {
@@ -27,25 +45,83 @@ export default function ConnectPage() {
     }
   }, [hasHydrated, isConnected, router]);
 
+  useEffect(() => {
+    const referralParam = new URLSearchParams(window.location.search)
+      .get("ref")
+      ?.trim();
+
+    setReferralCode(referralParam || undefined);
+  }, []);
+
   if (!hasHydrated || isConnected) {
     return null;
   }
 
   const handleConnect = async () => {
+    setErrorMessage("");
     setModalOpen(true);
     setStep("connecting");
 
-    // Simulate wallet detection
-    await new Promise((r) => setTimeout(r, 1200));
-    setStep("approving");
+    try {
+      if (USE_MOCK_API) {
+        await new Promise((resolve) => setTimeout(resolve, 1200));
+        setStep("approving");
+        await connectWallet();
+      } else {
+        const provider = getSolanaProvider();
 
-    // Simulate approval + actual connect
-    await connectWallet();
-    setStep("success");
+        if (!provider) {
+          throw new Error("No compatible Solana wallet found. Install Phantom and try again.");
+        }
 
-    // Redirect after brief success state
-    await new Promise((r) => setTimeout(r, 800));
-    router.push("/dashboard");
+        const connection = await provider.connect();
+        const walletAddress =
+          getProviderWalletAddress(provider) ?? connection.publicKey?.toBase58();
+
+        if (!walletAddress) {
+          throw new Error("Unable to read the connected wallet address.");
+        }
+
+        const challenge = await getAuthChallenge(walletAddress, {
+          baseURL: BROWSER_API_PROXY_BASE_URL,
+        });
+
+        setStep("approving");
+
+        const signatureResult = await provider.signMessage(
+          textEncoder.encode(challenge.challenge),
+          "utf8"
+        );
+        const signature = encodeBase58(getProviderSignature(signatureResult));
+
+        await verifyAuthSignature(
+          {
+            wallet: walletAddress,
+            challenge: challenge.challenge,
+            signature,
+            referralCode,
+          },
+          {
+            baseURL: BROWSER_API_PROXY_BASE_URL,
+          }
+        );
+
+        const session = await getWalletSessionData();
+        setWalletSession(session);
+      }
+
+      setStep("success");
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      router.push("/dashboard");
+    } catch (error) {
+      setModalOpen(false);
+      setStep("idle");
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Wallet connection failed. Please try again."
+      );
+    }
   };
 
   return (
@@ -74,6 +150,12 @@ export default function ConnectPage() {
           <Wallet className="w-4 h-4" />
           Connect Wallet
         </motion.button>
+
+        {errorMessage ? (
+          <p className="mt-3 max-w-xs text-center text-xs text-red-300">
+            {errorMessage}
+          </p>
+        ) : null}
       </div>
 
       {/* Wallet Connect Modal */}

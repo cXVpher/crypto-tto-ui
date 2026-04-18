@@ -1,70 +1,76 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { ArrowsDownUp } from "@phosphor-icons/react";
 import { useForm, useWatch } from "react-hook-form";
+import { useQuery } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod/v4";
+
+import {
+  BROWSER_API_PROXY_BASE_URL,
+  executeSwap,
+  getSwapQuote,
+  getWalletSessionData,
+} from "@/lib/api-service";
 import { FormFeedback } from "@/components/ui/form-feedback";
-import { TOKEN_SYMBOL, TOKEN_PRICE_USDT } from "@/lib/mock-data";
+import { TOKEN_SYMBOL } from "@/lib/mock-data";
 import { formatBalance } from "@/lib/utils";
 import { useWalletStore } from "@/store/use-wallet-store";
 
-const MIN_SWAP_AMOUNT = 10;
-
-const swapFormSchema = z.object({
-  fromAmount: z
-    .string()
-    .trim()
-    .min(1, `Enter a valid ${TOKEN_SYMBOL} amount.`)
-    .refine((value) => Number.isFinite(Number(value)), {
-      message: `Enter a valid ${TOKEN_SYMBOL} amount.`,
-    })
-    .refine((value) => Number(value) >= MIN_SWAP_AMOUNT, {
-      message: `Minimum swap is ${MIN_SWAP_AMOUNT} ${TOKEN_SYMBOL}.`,
-    }),
-  toAmount: z.string(),
-});
-
-function createSwapFormSchema(balance: number) {
-  return swapFormSchema.superRefine((values, context) => {
-    const fromAmount = Number(values.fromAmount);
-
-    if (fromAmount > balance) {
-      context.addIssue({
-        code: "custom",
-        path: ["fromAmount"],
-        message: `Available balance is ${formatBalance(balance)} ${TOKEN_SYMBOL}.`,
-      });
-    }
-
-    if (
-      values.fromAmount.trim() !== "" &&
-      Number.isFinite(fromAmount) &&
-      fromAmount >= MIN_SWAP_AMOUNT &&
-      fromAmount <= balance
-    ) {
-      const toAmount = Number(values.toAmount);
-
-      if (!Number.isFinite(toAmount) || toAmount <= 0) {
-        context.addIssue({
-          code: "custom",
-          path: ["toAmount"],
-          message: "Calculated receive amount must be greater than 0.",
-        });
-      }
-    }
-  });
+interface SwapFormProps {
+  feePercentage: number;
+  minimumTto: number;
+  tokenPriceUsdt: number;
 }
 
-type SwapFormValues = z.input<typeof swapFormSchema>;
+function createSwapFormSchema(balance: number, minimumTto: number) {
+  return z
+    .object({
+      fromAmount: z
+        .string()
+        .trim()
+        .min(1, `Enter a valid ${TOKEN_SYMBOL} amount.`)
+        .refine((value) => Number.isFinite(Number(value)), {
+          message: `Enter a valid ${TOKEN_SYMBOL} amount.`,
+        })
+        .refine((value) => Number(value) >= minimumTto, {
+          message: `Minimum swap is ${formatBalance(minimumTto)} ${TOKEN_SYMBOL}.`,
+        }),
+      toAmount: z.string(),
+    })
+    .superRefine((values, context) => {
+      const fromAmount = Number(values.fromAmount);
 
-export function SwapForm() {
+      if (fromAmount > balance) {
+        context.addIssue({
+          code: "custom",
+          path: ["fromAmount"],
+          message: `Available balance is ${formatBalance(balance)} ${TOKEN_SYMBOL}.`,
+        });
+      }
+    });
+}
+
+type SwapFormValues = {
+  fromAmount: string;
+  toAmount: string;
+};
+
+export function SwapForm({
+  feePercentage,
+  minimumTto,
+  tokenPriceUsdt,
+}: SwapFormProps) {
+  const router = useRouter();
   const walletAddress = useWalletStore((state) => state.walletAddress);
   const balance = useWalletStore((state) => state.balance);
+  const setWalletSession = useWalletStore((state) => state.setWalletSession);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const feeRate = 0.01;
+  const [submitMessage, setSubmitMessage] = useState("");
+  const [submitError, setSubmitError] = useState("");
   const {
     register,
     handleSubmit,
@@ -72,8 +78,9 @@ export function SwapForm() {
     control,
     formState: { errors, isSubmitting, isValid },
   } = useForm<SwapFormValues>({
-    // Resolver runtime supports this schema; the cast avoids a Zod v4 typing mismatch.
-    resolver: zodResolver(createSwapFormSchema(balance) as never),
+    resolver: zodResolver(
+      createSwapFormSchema(balance, minimumTto) as never
+    ),
     mode: "onChange",
     defaultValues: {
       fromAmount: "",
@@ -89,27 +96,73 @@ export function SwapForm() {
   const hasPreviewAmount =
     fromAmount.trim() !== "" &&
     Number.isFinite(parsedFromAmount) &&
-    parsedFromAmount >= MIN_SWAP_AMOUNT &&
+    parsedFromAmount >= minimumTto &&
     parsedFromAmount <= balance;
-  const fee = hasPreviewAmount ? parsedFromAmount * feeRate : 0;
-  const receiveUsdt =
-    hasPreviewAmount ? (parsedFromAmount - fee) * TOKEN_PRICE_USDT : 0;
+
+  const swapQuoteQuery = useQuery({
+    queryKey: ["swapQuote", parsedFromAmount],
+    queryFn: () =>
+      getSwapQuote(parsedFromAmount, {
+        baseURL: BROWSER_API_PROXY_BASE_URL,
+      }),
+    enabled: hasPreviewAmount,
+    retry: false,
+    staleTime: 0,
+  });
+
+  const previewFeeTto = hasPreviewAmount
+    ? swapQuoteQuery.data?.feeTto ?? 0
+    : 0;
+  const previewNetUsdt = hasPreviewAmount
+    ? swapQuoteQuery.data?.netUsdt ?? 0
+    : 0;
+  const activeQuoteError =
+    hasPreviewAmount && swapQuoteQuery.error instanceof Error
+      ? swapQuoteQuery.error.message
+      : "";
 
   useEffect(() => {
-    setValue("toAmount", receiveUsdt > 0 ? String(receiveUsdt) : "", {
+    setValue("toAmount", previewNetUsdt > 0 ? String(previewNetUsdt) : "", {
       shouldDirty: false,
       shouldValidate: fromAmount.trim() !== "",
     });
-  }, [fromAmount, receiveUsdt, setValue]);
+  }, [fromAmount, previewNetUsdt, setValue]);
 
   function handleFieldChange() {
     if (isSubmitted) {
       setIsSubmitted(false);
+      setSubmitMessage("");
+    }
+
+    if (submitError) {
+      setSubmitError("");
     }
   }
 
-  function handleValidSubmit() {
-    setIsSubmitted(true);
+  async function handleValidSubmit(values: SwapFormValues) {
+    const amount = Number(values.fromAmount);
+
+    setSubmitError("");
+
+    try {
+      const result = await executeSwap(amount, {
+        baseURL: BROWSER_API_PROXY_BASE_URL,
+      });
+      const session = await getWalletSessionData();
+
+      setWalletSession(session);
+      setIsSubmitted(true);
+      setSubmitMessage(
+        `Swap completed. ${formatBalance(result.netUsdt)} USDT was credited to your wallet.`
+      );
+      router.refresh();
+    } catch (error) {
+      setIsSubmitted(false);
+      setSubmitMessage("");
+      setSubmitError(
+        error instanceof Error ? error.message : "Unable to execute the swap."
+      );
+    }
   }
 
   return (
@@ -130,7 +183,7 @@ export function SwapForm() {
         <input
           type="number"
           step="any"
-          placeholder={`Minimum ${MIN_SWAP_AMOUNT} ${TOKEN_SYMBOL}`}
+          placeholder={`Minimum ${formatBalance(minimumTto)} ${TOKEN_SYMBOL}`}
           className="field-input w-full rounded-xl px-4 py-3 text-sm transition-all focus:outline-none"
           style={{
             background:
@@ -177,7 +230,11 @@ export function SwapForm() {
               "linear-gradient(180deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.045) 100%)",
           }}
         >
-          {fee > 0 ? formatBalance(fee) : "0"}
+          {swapQuoteQuery.isLoading
+            ? "Loading quote..."
+            : previewFeeTto > 0
+              ? formatBalance(previewFeeTto)
+              : "0"}
         </div>
       </div>
 
@@ -192,7 +249,11 @@ export function SwapForm() {
               "linear-gradient(180deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.045) 100%)",
           }}
         >
-          {receiveUsdt > 0 ? `$${formatBalance(receiveUsdt)}` : "$0.00"}
+          {swapQuoteQuery.isLoading
+            ? "Loading quote..."
+            : previewNetUsdt > 0
+              ? `$${formatBalance(previewNetUsdt)}`
+              : "$0.00"}
         </div>
         {errors.toAmount ? (
           <p className="mt-1 text-[11px] text-red-500">{errors.toAmount.message}</p>
@@ -214,15 +275,16 @@ export function SwapForm() {
         </div>
       </div>
 
-      {isSubmitted ? (
-        <FormFeedback variant="success">
-          Swap preview submitted. Backend execution can replace this confirmation
-          state later.
-        </FormFeedback>
+      {submitError ? (
+        <FormFeedback variant="error">{submitError}</FormFeedback>
+      ) : activeQuoteError ? (
+        <FormFeedback variant="error">{activeQuoteError}</FormFeedback>
+      ) : isSubmitted ? (
+        <FormFeedback variant="success">{submitMessage}</FormFeedback>
       ) : (
         <FormFeedback>
-          A {formatBalance(feeRate * 100)}% fee is applied before the USDT
-          estimate is calculated.
+          Current TTO price is ${formatBalance(tokenPriceUsdt, 4)} with a{" "}
+          {formatBalance(feePercentage, 2)}% swap fee.
         </FormFeedback>
       )}
 
@@ -230,7 +292,12 @@ export function SwapForm() {
         whileTap={{ scale: 0.98 }}
         type="submit"
         className="btn-cash mt-2 w-full rounded-xl py-3.5 text-sm font-bold tracking-wide disabled:cursor-not-allowed disabled:opacity-60"
-        disabled={!isValid || isSubmitting}
+        disabled={
+          !isValid ||
+          isSubmitting ||
+          swapQuoteQuery.isLoading ||
+          previewNetUsdt <= 0
+        }
         style={{
           background:
             "linear-gradient(135deg, rgba(126,194,255,0.62) 0%, rgba(75,125,232,0.82) 100%)",
@@ -239,7 +306,7 @@ export function SwapForm() {
           color: "#ffffff",
         }}
       >
-        SWAP
+        {isSubmitting ? "SWAPPING..." : "SWAP"}
       </motion.button>
     </motion.form>
   );

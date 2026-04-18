@@ -4,46 +4,62 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, Wallet } from "@phosphor-icons/react";
 import { useForm, useWatch } from "react-hook-form";
+import { useQuery } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod/v4";
+
+import {
+  BROWSER_API_PROXY_BASE_URL,
+  getWalletSessionData,
+  getWithdrawQuote,
+  submitWithdraw,
+} from "@/lib/api-service";
 import { FormFeedback } from "@/components/ui/form-feedback";
-import { TOKEN_PRICE_USDT, TOKEN_SYMBOL } from "@/lib/mock-data";
 import { formatBalance } from "@/lib/utils";
 import { useWalletStore } from "@/store/use-wallet-store";
 
-const withdrawFormSchema = z.object({
-  amount: z
-    .string()
-    .trim()
-    .min(1, `Enter a valid ${TOKEN_SYMBOL} amount.`)
-    .refine((value) => Number.isFinite(Number(value)), {
-      message: `Enter a valid ${TOKEN_SYMBOL} amount.`,
-    })
-    .refine((value) => Number(value) > 0, {
-      message: `Amount must be greater than 0 ${TOKEN_SYMBOL}.`,
-    }),
-  recipient: z.string().trim().min(10, "Enter a valid recipient address."),
-});
+const USE_MOCK_API = process.env.NEXT_PUBLIC_USE_MOCK_API === "true";
 
 function createWithdrawFormSchema(balance: number) {
-  return withdrawFormSchema.superRefine((values, context) => {
-    if (Number(values.amount) > balance) {
-      context.addIssue({
-        code: "custom",
-        path: ["amount"],
-        message: `Available balance is ${formatBalance(balance)} ${TOKEN_SYMBOL}.`,
-      });
-    }
-  });
+  return z
+    .object({
+      amount: z
+        .string()
+        .trim()
+        .min(1, "Enter a valid USDT amount.")
+        .refine((value) => Number.isFinite(Number(value)), {
+          message: "Enter a valid USDT amount.",
+        })
+        .refine((value) => Number(value) > 0, {
+          message: "Amount must be greater than 0 USDT.",
+        }),
+      recipient: z
+        .string()
+        .trim()
+        .min(10, "Enter a valid recipient address."),
+    })
+    .superRefine((values, context) => {
+      if (Number(values.amount) > balance) {
+        context.addIssue({
+          code: "custom",
+          path: ["amount"],
+          message: `Available balance is ${formatBalance(balance)} USDT.`,
+        });
+      }
+    });
 }
 
-type WithdrawFormValues = z.input<typeof withdrawFormSchema>;
+type WithdrawFormValues = {
+  amount: string;
+  recipient: string;
+};
 
 export function WithdrawForm() {
   const walletAddress = useWalletStore((state) => state.walletAddress);
-  const balance = useWalletStore((state) => state.balance);
+  const usdtBalance = useWalletStore((state) => state.usdtBalance);
+  const setWalletSession = useWalletStore((state) => state.setWalletSession);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const feeRate = 0.01;
+  const [submitError, setSubmitError] = useState("");
   const {
     register,
     handleSubmit,
@@ -51,8 +67,7 @@ export function WithdrawForm() {
     control,
     formState: { errors, isSubmitting, isValid },
   } = useForm<WithdrawFormValues>({
-    // Resolver runtime supports this schema; the cast avoids a Zod v4 typing mismatch.
-    resolver: zodResolver(createWithdrawFormSchema(balance) as never),
+    resolver: zodResolver(createWithdrawFormSchema(usdtBalance) as never),
     mode: "onChange",
     defaultValues: {
       amount: "",
@@ -74,10 +89,18 @@ export function WithdrawForm() {
     amount.trim() !== "" &&
     Number.isFinite(parsedAmount) &&
     parsedAmount > 0 &&
-    parsedAmount <= balance;
-  const grossUsd = hasPreviewAmount ? parsedAmount * TOKEN_PRICE_USDT : 0;
-  const feeUsd = hasPreviewAmount ? grossUsd * feeRate : 0;
-  const receiveAmountUsd = hasPreviewAmount ? grossUsd - feeUsd : 0;
+    parsedAmount <= usdtBalance;
+
+  const withdrawQuoteQuery = useQuery({
+    queryKey: ["withdrawQuote", parsedAmount],
+    queryFn: () =>
+      getWithdrawQuote(parsedAmount, {
+        baseURL: BROWSER_API_PROXY_BASE_URL,
+      }),
+    enabled: hasPreviewAmount && !USE_MOCK_API,
+    retry: false,
+    staleTime: 0,
+  });
 
   useEffect(() => {
     if (!recipient && walletAddress) {
@@ -88,14 +111,58 @@ export function WithdrawForm() {
     }
   }, [recipient, setValue, walletAddress]);
 
+  const activeQuoteFeeUsdt = hasPreviewAmount
+    ? USE_MOCK_API
+      ? parsedAmount * 0.01
+      : withdrawQuoteQuery.data?.networkFeeUsdt ?? 0
+    : 0;
+  const activeReceiveUsdt = hasPreviewAmount
+    ? USE_MOCK_API
+      ? parsedAmount - parsedAmount * 0.01
+      : withdrawQuoteQuery.data?.youReceiveUsdt ?? 0
+    : 0;
+  const activeQuoteError =
+    hasPreviewAmount && !USE_MOCK_API && withdrawQuoteQuery.error instanceof Error
+      ? withdrawQuoteQuery.error.message
+      : "";
+
   function handleFieldChange() {
     if (isSubmitted) {
       setIsSubmitted(false);
     }
+
+    if (submitError) {
+      setSubmitError("");
+    }
   }
 
-  function handleValidSubmit() {
-    setIsSubmitted(true);
+  async function handleValidSubmit(values: WithdrawFormValues) {
+    const amountUsdt = Number(values.amount);
+
+    if (USE_MOCK_API) {
+      setSubmitError("");
+      setIsSubmitted(true);
+      return;
+    }
+
+    setSubmitError("");
+
+    try {
+      await submitWithdraw(amountUsdt, values.recipient.trim(), {
+        baseURL: BROWSER_API_PROXY_BASE_URL,
+      });
+      const session = await getWalletSessionData();
+
+      setWalletSession(session);
+      setIsSubmitted(true);
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : "Unable to submit the withdraw request."
+      );
+      setIsSubmitted(false);
+    }
   }
 
   return (
@@ -108,19 +175,19 @@ export function WithdrawForm() {
       noValidate
     >
       <FormFeedback>
-        Withdrawal is currently a frontend-only request preview while backend
-        processing is being built. A {formatBalance(feeRate * 100)}% network fee
-        is deducted from the USD payout.
+        {USE_MOCK_API
+          ? "Withdrawal is currently a frontend-only request preview while backend processing is being built."
+          : "Withdrawals use your internal USDT balance. The backend applies the live network fee quote before the request is queued."}
       </FormFeedback>
 
       <div>
         <label className="mb-2 block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-          Amount ({TOKEN_SYMBOL})
+          Amount (USDT)
         </label>
         <input
           type="number"
           step="any"
-          placeholder={`Max ${formatBalance(balance)} ${TOKEN_SYMBOL}`}
+          placeholder={`Max ${formatBalance(usdtBalance)} USDT`}
           className="field-input w-full rounded-xl px-4 py-3 text-sm transition-all focus:outline-none"
           aria-invalid={Boolean(errors.amount)}
           {...register("amount", {
@@ -128,7 +195,7 @@ export function WithdrawForm() {
           })}
         />
         <p className="mt-2 text-[10px] text-muted-foreground">
-          Available: {formatBalance(balance)} {TOKEN_SYMBOL}
+          Available: {formatBalance(usdtBalance)} USDT
         </p>
         {errors.amount ? (
           <p className="mt-1 text-[11px] text-red-500">{errors.amount.message}</p>
@@ -162,19 +229,27 @@ export function WithdrawForm() {
 
       <div>
         <label className="mb-2 block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-          Network Fee (USD)
+          Network Fee (USDT)
         </label>
         <div className="field-output w-full rounded-xl px-4 py-3 text-sm">
-          {feeUsd > 0 ? `$${formatBalance(feeUsd)}` : "$0.00"}
+          {withdrawQuoteQuery.isLoading
+            ? "Loading quote..."
+            : activeQuoteFeeUsdt > 0
+              ? formatBalance(activeQuoteFeeUsdt)
+              : "0.00"}
         </div>
       </div>
 
       <div>
         <label className="mb-2 block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-          You Receive (USD)
+          You Receive (USDT)
         </label>
         <div className="field-output w-full rounded-xl px-4 py-3 text-sm font-semibold">
-          {receiveAmountUsd > 0 ? `$${formatBalance(receiveAmountUsd)}` : "$0.00"}
+          {withdrawQuoteQuery.isLoading
+            ? "Loading quote..."
+            : activeReceiveUsdt > 0
+              ? formatBalance(activeReceiveUsdt)
+              : "0.00"}
         </div>
       </div>
 
@@ -190,10 +265,17 @@ export function WithdrawForm() {
         </p>
       </div>
 
-      {isSubmitted ? (
+      {activeQuoteError ? (
+        <FormFeedback variant="error">{activeQuoteError}</FormFeedback>
+      ) : null}
+
+      {submitError ? (
+        <FormFeedback variant="error">{submitError}</FormFeedback>
+      ) : isSubmitted ? (
         <FormFeedback variant="success">
-          Withdraw request prepared successfully. Backend processing can attach
-          to this confirmation state when it is ready.
+          {USE_MOCK_API
+            ? "Withdraw request prepared successfully. Backend processing can attach to this confirmation state when it is ready."
+            : "Withdraw request submitted successfully. The backend has queued the payout for processing."}
         </FormFeedback>
       ) : null}
 
@@ -201,7 +283,12 @@ export function WithdrawForm() {
         whileTap={{ scale: 0.98 }}
         type="submit"
         className="btn-gold w-full rounded-xl py-3.5 text-sm font-bold tracking-wide disabled:cursor-not-allowed disabled:opacity-60"
-        disabled={!isValid || isSubmitting}
+        disabled={
+          !isValid ||
+          isSubmitting ||
+          withdrawQuoteQuery.isLoading ||
+          activeReceiveUsdt <= 0
+        }
         style={{
           background:
             "linear-gradient(135deg, rgba(106,178,255,0.55) 0%, rgba(59,100,220,0.75) 100%)",
@@ -210,7 +297,7 @@ export function WithdrawForm() {
           color: "#ffffff",
         }}
       >
-        SUBMIT WITHDRAW
+        {isSubmitting ? "SUBMITTING..." : "SUBMIT WITHDRAW"}
       </motion.button>
     </motion.form>
   );

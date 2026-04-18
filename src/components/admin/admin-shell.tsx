@@ -7,6 +7,7 @@ import { SignOut } from "@phosphor-icons/react";
 
 import { logoutAdminAction } from "@/app/admin/actions";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   Sheet,
   SheetContent,
@@ -26,9 +27,9 @@ interface AdminShellProps {
 
 export function AdminShell({ children }: AdminShellProps) {
   const pathname = usePathname();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isOverflowOpen, setIsOverflowOpen] = useState(false);
   const isLoginRoute = pathname === "/admin/login";
+  const isOverviewRoute = pathname === "/admin";
 
   if (isLoginRoute) {
     return <>{children}</>;
@@ -39,30 +40,41 @@ export function AdminShell({ children }: AdminShellProps) {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(34,211,238,0.18),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(56,189,248,0.12),_transparent_24%),linear-gradient(180deg,_rgba(4,12,24,0.2)_0%,_rgba(4,12,24,0.86)_36%,_rgba(4,12,24,1)_100%)]" />
       <div className="pointer-events-none absolute inset-0 opacity-30 [background-image:linear-gradient(rgba(148,163,184,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.08)_1px,transparent_1px)] [background-size:36px_36px]" />
 
-      <div className="relative flex min-h-screen">
+      <div
+        className={cn(
+          "relative flex min-h-screen",
+          isOverviewRoute && "justify-center lg:justify-start"
+        )}
+      >
         <div className="hidden w-[280px] shrink-0 lg:block">
-          <Sidebar />
+          <Sidebar className="fixed inset-y-0 left-0 w-[280px] overflow-y-auto" />
         </div>
 
-        <div className="flex min-w-0 flex-1 flex-col">
-          <AdminTopBar onOpenSidebar={() => setIsSidebarOpen(true)} />
-          <main className="min-w-0 flex-1 px-4 py-4 pb-24 md:px-6 md:py-6 lg:px-8 lg:py-8 lg:pb-8">
+        <div
+          className={cn(
+            "flex min-w-0 flex-1 flex-col",
+            isOverviewRoute &&
+              "w-full max-w-[430px] overflow-x-hidden border-x border-white/8 bg-[#07101d]/70 shadow-[0_0_0_1px_rgba(255,255,255,0.02)] lg:max-w-none lg:border-x-0 lg:bg-transparent lg:shadow-none"
+          )}
+        >
+          <AdminTopBar compactFrame={isOverviewRoute} />
+          <main
+            className={cn(
+              "min-w-0 flex-1",
+              isOverviewRoute
+                ? "px-4 py-4 pb-24 lg:px-8 lg:py-8 lg:pb-8"
+                : "px-4 py-4 pb-24 md:px-6 md:py-6 lg:px-8 lg:py-8 lg:pb-8"
+            )}
+          >
             {children}
           </main>
         </div>
       </div>
 
-      <AdminBottomNav onOpenOverflow={() => setIsOverflowOpen(true)} />
-
-      <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
-        <SheetContent
-          side="left"
-          className="w-[90vw] max-w-[320px] border-r border-white/8 bg-[#050810] p-0 text-white sm:max-w-[320px]"
-          showCloseButton={false}
-        >
-          <Sidebar onNavigate={() => setIsSidebarOpen(false)} />
-        </SheetContent>
-      </Sheet>
+      <AdminBottomNav
+        onOpenOverflow={() => setIsOverflowOpen(true)}
+        compactFrame={isOverviewRoute}
+      />
 
       <Sheet open={isOverflowOpen} onOpenChange={setIsOverflowOpen}>
         <SheetContent
