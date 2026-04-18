@@ -1,9 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { formatBalance } from "@/lib/utils";
-import { TOKEN_SYMBOL } from "@/lib/mock-data";
 import { TrendUp } from "@phosphor-icons/react";
+import { TOKEN_SYMBOL } from "@/app/_lib/mock-data";
+import { formatBalance } from "@/lib/utils";
 import { useWalletStore } from "@/store/use-wallet-store";
 
 interface MainBalanceCardProps {

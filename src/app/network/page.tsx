@@ -1,4 +1,4 @@
-import { getNetworkData } from "@/lib/api-service";
+import { getNetworkData } from "@/app/network/_services/network-service";
 import { getServerAccessToken } from "@/lib/server-auth";
 import { NetworkPageClient } from "./_components/network-page-client";
 

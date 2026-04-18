@@ -1,6 +1,6 @@
 import { PageHeader } from "@/components/layout/page-header";
-import { getProfileData } from "@/lib/api-service";
-import { userProfile } from "@/lib/mock-data";
+import { userProfile } from "@/app/_lib/mock-data";
+import { getProfileData } from "@/app/profile/_services/profile-service";
 import { getServerAccessToken } from "@/lib/server-auth";
 import { ProfileHeader } from "./_components/profile-header";
 import { ProfileInfoList } from "./_components/profile-info-list";

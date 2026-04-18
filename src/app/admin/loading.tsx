@@ -1,4 +1,4 @@
-import { AdminLoadingSkeleton } from "@/components/admin/admin-loading-skeleton";
+import { AdminLoadingSkeleton } from "@/app/admin/_components/admin-loading-skeleton";
 
 export default function AdminLoading() {
   return <AdminLoadingSkeleton title="admin" />;

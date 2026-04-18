@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { TOKEN_SYMBOL } from "@/lib/mock-data";
+import { TOKEN_SYMBOL } from "@/app/_lib/mock-data";
 import { formatBalance } from "@/lib/utils";
 import { useWalletStore } from "@/store/use-wallet-store";
 

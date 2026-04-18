@@ -2,9 +2,9 @@
 
 import { Handshake } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "framer-motion";
-import type { NetworkAffiliateLevel } from "@/lib/api-service";
+import type { NetworkAffiliateLevel } from "@/app/_types/api-types";
+import { TOKEN_SYMBOL } from "@/app/_lib/mock-data";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { TOKEN_SYMBOL } from "@/lib/mock-data";
 import { formatBalance } from "@/lib/utils";
 
 interface NetworkContentProps {

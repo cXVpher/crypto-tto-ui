@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { CoinLogo } from "@/components/ui/coin-logo";
-import { TOKEN_NAME, TOKEN_SYMBOL } from "@/lib/mock-data";
+import { TOKEN_NAME, TOKEN_SYMBOL } from "@/app/_lib/mock-data";
 
 export function HeroSection() {
   return (

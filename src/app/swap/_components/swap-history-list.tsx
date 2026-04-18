@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import type { SwapHistoryItem } from "@/lib/api-service";
+import type { SwapHistoryItem } from "@/app/_types/api-types";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { formatBalance } from "@/lib/utils";
 

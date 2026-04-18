@@ -1,6 +1,6 @@
-import { getAdminOverviewData } from "@/lib/admin-api-service";
+import { getAdminOverviewData } from "@/app/admin/_services/admin-api-service";
 import { requireAdminSession } from "@/lib/admin-session";
-import { OverviewPage } from "@/components/admin/overview-page";
+import { OverviewPage } from "@/app/admin/_components/overview-page";
 
 export default async function AdminOverviewRoute() {
   await requireAdminSession();

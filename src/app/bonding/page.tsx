@@ -1,5 +1,8 @@
 import { PageHeader } from "@/components/layout/page-header";
-import { getBondingPackages, getMyBondingList } from "@/lib/api-service";
+import {
+  getBondingPackages,
+  getMyBondingList,
+} from "@/app/bonding/_services/bonding-service";
 import { getServerAccessToken } from "@/lib/server-auth";
 import { BondingPackageList } from "./_components/bonding-package-list";
 import { MyBondingList } from "./_components/my-bonding-list";

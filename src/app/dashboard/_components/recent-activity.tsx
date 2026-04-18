@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { truncateAddress } from "@/lib/utils";
-import { TOKEN_SYMBOL } from "@/lib/mock-data";
+import { TOKEN_SYMBOL } from "@/app/_lib/mock-data";
 import {
   ArrowDownLeft,
   ArrowUpRight,

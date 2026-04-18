@@ -6,12 +6,14 @@ import { Gift, Stack } from "@phosphor-icons/react";
 
 import {
   BROWSER_API_PROXY_BASE_URL,
+} from "@/app/_services/api-helpers";
+import {
   confirmDeposit,
   getDepositPriceData,
   getDepositQuote,
-} from "@/lib/api-service";
+} from "@/app/purchase/_services/purchase-service";
 import { FormFeedback } from "@/components/ui/form-feedback";
-import { TOKEN_SYMBOL, TOKEN_PRICE_USDT } from "@/lib/mock-data";
+import { TOKEN_PRICE_USDT, TOKEN_SYMBOL } from "@/app/_lib/mock-data";
 import { formatBalance } from "@/lib/utils";
 import { useWalletStore } from "@/store/use-wallet-store";
 

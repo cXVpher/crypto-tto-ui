@@ -4,7 +4,7 @@
 import { motion } from "framer-motion";
 import { PageHeader } from "@/components/layout/page-header";
 import { CoinLogo } from "@/components/ui/coin-logo";
-import { TOKEN_SYMBOL } from "@/lib/mock-data";
+import { TOKEN_SYMBOL } from "@/app/_lib/mock-data";
 import { PurchaseForm } from "./_components/purchase-form";
 
 export default function PurchasePage() {

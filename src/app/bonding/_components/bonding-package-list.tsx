@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { Fire, Plus } from "@phosphor-icons/react";
-import type { BondingPackage } from "@/lib/api-service";
+import type { BondingPackage } from "@/app/_types/api-types";
 
 interface BondingPackageListProps {
   packages: BondingPackage[];

@@ -4,7 +4,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useWalletStore } from "@/store/use-wallet-store";
-import { useDashboardData } from "@/hooks/use-dashboard-data";
+import { useDashboardData } from "./_hooks/use-dashboard-data";
 
 import { TopBar } from "./_components/top-bar";
 import { MainBalanceCard } from "./_components/main-balance-card";

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import type { NetworkAffiliateLevel } from "@/lib/api-service";
+import type { NetworkAffiliateLevel } from "@/app/_types/api-types";
 import { PageHeader } from "@/components/layout/page-header";
 import { UserWallet } from "./user-wallet";
 import { NetworkTabs } from "./network-tabs";

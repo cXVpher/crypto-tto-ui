@@ -6,12 +6,12 @@ import { motion } from "framer-motion";
 import { Fire } from "@phosphor-icons/react";
 import {
   BROWSER_API_PROXY_BASE_URL,
-  getWalletSessionData,
-  startBonding,
-  type BondingPackage,
-} from "@/lib/api-service";
+} from "@/app/_services/api-helpers";
+import { getWalletSessionData } from "@/app/_services/session-service";
+import { startBonding } from "@/app/bonding/_services/bonding-service";
+import type { BondingPackage } from "@/app/_types/api-types";
 import { FormFeedback } from "@/components/ui/form-feedback";
-import { TOKEN_SYMBOL } from "@/lib/mock-data";
+import { TOKEN_SYMBOL } from "@/app/_lib/mock-data";
 import { formatBalance } from "@/lib/utils";
 import { useWalletStore } from "@/store/use-wallet-store";
 

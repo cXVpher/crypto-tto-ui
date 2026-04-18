@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 
-import { getWalletSessionData } from "@/lib/api-service";
+import { getWalletSessionData } from "@/app/_services/session-service";
 import { useWalletStore } from "@/store/use-wallet-store";
 
 const USE_MOCK_API = process.env.NEXT_PUBLIC_USE_MOCK_API === "true";

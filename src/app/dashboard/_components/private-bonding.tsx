@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { formatBalance } from "@/lib/utils";
-import { TOKEN_SYMBOL } from "@/lib/mock-data";
+import { TOKEN_SYMBOL } from "@/app/_lib/mock-data";
 import { Lock } from "@phosphor-icons/react";
 import { useWalletStore } from "@/store/use-wallet-store";
 

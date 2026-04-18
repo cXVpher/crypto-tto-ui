@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { ShieldCheck } from "@phosphor-icons/react/dist/ssr";
 
-import { AdminLoginForm } from "@/components/admin/admin-login-form";
+import { AdminLoginForm } from "@/app/admin/login/_components/admin-login-form";
 import { ADMIN_HOME_PATH } from "@/lib/admin-auth";
 import { readAdminSession } from "@/lib/admin-session";
 

@@ -1,5 +1,8 @@
 import { PageHeader } from "@/components/layout/page-header";
-import { getSwapHistoryData, getSwapRateData } from "@/lib/api-service";
+import {
+  getSwapHistoryData,
+  getSwapRateData,
+} from "@/app/swap/_services/swap-service";
 import { getServerAccessToken } from "@/lib/server-auth";
 import { SwapBalance } from "./_components/swap-balance";
 import { SwapForm } from "./_components/swap-form";

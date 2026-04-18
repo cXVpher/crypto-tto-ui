@@ -1,5 +1,5 @@
-import { SettingsPage } from "@/components/admin/settings-page";
-import { getAdminSettingsData } from "@/lib/admin-api-service";
+import { SettingsPage } from "@/app/admin/settings/_components/settings-page";
+import { getAdminSettingsData } from "@/app/admin/_services/admin-api-service";
 import { requireAdminSession } from "@/lib/admin-session";
 
 export default async function AdminSettingsRoute() {

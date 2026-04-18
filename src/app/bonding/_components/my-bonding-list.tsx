@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { ClipboardText } from "@phosphor-icons/react";
-import type { BondingItem } from "@/lib/api-service";
+import type { BondingItem } from "@/app/_types/api-types";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { formatBalance } from "@/lib/utils";
 

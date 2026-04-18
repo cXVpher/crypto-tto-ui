@@ -5,13 +5,13 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Wallet } from "@phosphor-icons/react";
-import { useWalletStore } from "@/store/use-wallet-store";
+import { BROWSER_API_PROXY_BASE_URL } from "@/app/_services/api-helpers";
 import {
-  BROWSER_API_PROXY_BASE_URL,
   getAuthChallenge,
-  getWalletSessionData,
   verifyAuthSignature,
-} from "@/lib/api-service";
+} from "@/app/_services/auth-service";
+import { getWalletSessionData } from "@/app/_services/session-service";
+import { useWalletStore } from "@/store/use-wallet-store";
 import { encodeBase58 } from "@/lib/base58";
 import {
   getProviderSignature,

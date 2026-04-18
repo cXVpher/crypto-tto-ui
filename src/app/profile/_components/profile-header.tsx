@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import type { ProfileData } from "@/lib/api-service";
+import type { ProfileData } from "@/app/_types/api-types";
 import { useWalletStore } from "@/store/use-wallet-store";
 
 interface ProfileHeaderProps {

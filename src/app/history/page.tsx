@@ -1,4 +1,4 @@
-import { getHistoryData } from "@/lib/api-service";
+import { getHistoryData } from "@/app/history/_services/history-service";
 import { getServerAccessToken } from "@/lib/server-auth";
 import { HistoryPageClient } from "./_components/history-page-client";
 

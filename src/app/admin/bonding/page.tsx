@@ -1,5 +1,5 @@
-import { BondingPage } from "@/components/admin/bonding-page";
-import { getAdminBondingData } from "@/lib/admin-api-service";
+import { BondingPage } from "@/app/admin/bonding/_components/bonding-page";
+import { getAdminBondingData } from "@/app/admin/_services/admin-api-service";
 import { requireAdminSession } from "@/lib/admin-session";
 
 export default async function AdminBondingRoute() {

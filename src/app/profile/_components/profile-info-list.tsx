@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Calendar, Check, Copy, Link, Shield, UserCheck } from "@phosphor-icons/react";
-import type { ProfileData } from "@/lib/api-service";
+import type { ProfileData } from "@/app/_types/api-types";
 import { useCopyFeedback } from "@/lib/use-copy-feedback";
 import { useWalletStore } from "@/store/use-wallet-store";
 import { truncateAddress } from "@/lib/utils";

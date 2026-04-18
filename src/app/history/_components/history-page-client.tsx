@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import type { PurchaseHistoryItem, WithdrawHistoryItem } from "@/lib/api-service";
+import type {
+  PurchaseHistoryItem,
+  WithdrawHistoryItem,
+} from "@/app/_types/api-types";
 import { PageHeader } from "@/components/layout/page-header";
 import { HistoryTabs } from "./history-tabs";
 import { HistoryContent } from "./history-content";

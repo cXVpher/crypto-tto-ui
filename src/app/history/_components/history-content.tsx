@@ -2,7 +2,10 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { Clock } from "@phosphor-icons/react";
-import type { PurchaseHistoryItem, WithdrawHistoryItem } from "@/lib/api-service";
+import type {
+  PurchaseHistoryItem,
+  WithdrawHistoryItem,
+} from "@/app/_types/api-types";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { formatBalance } from "@/lib/utils";
 

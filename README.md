@@ -20,6 +20,8 @@
 - Refactored admin route matching into a shared `isAdminNavItemActive` helper and updated the shell/top bar/bottom navigation/stat cards to accept shared layout props for the compact overview frame.
 - Refactored the frontend API client and wallet state management to normalize backend payload variants in `src/lib/api-service.ts`, centralize backend URL/cookie/session helpers, add Solana wallet provider and base58 utilities, and extend the persisted wallet store with backend session data such as USDT balance.
 - Refactored admin data contracts in `src/lib/admin-types.ts` to include per-page metadata and capability flags, then updated the admin pages to render from those contracts and operate in explicit mock or hybrid-live modes instead of assuming a single mock-only feature set.
+- Refactored the admin frontend structure to use route-local folders under `src/app/admin`, moving the old `src/components/admin` tree into shared and per-endpoint `_components` folders, relocating admin-only data modules from `src/lib` into `src/app/admin/_services`, `_lib`, and `_types`, and intentionally keeping only app-level admin auth/session primitives in `src/lib`.
+- Refactored the public-app data layer to match the admin route-local structure by splitting the old `src/lib/api-service.ts` monolith into shared app `_services` and `_types`, moving mock app data into `src/app/_lib/mock-data.ts`, relocating the dashboard query hook into `src/app/dashboard/_hooks`, and wiring bonding, network, swap, purchase, withdraw, history, profile, auth, and session access through route-scoped services under `src/app`.
 
 ## docs
 
@@ -30,6 +32,5 @@
 ## chore
 
 ## test
-- Re-ran `npm run lint` and `npm run build` after the hybrid admin integration, the frontend-only live admin fixes, and the wallet session bootstrap changes; all checks passed on April 18, 2026.
 
 ## perf

@@ -10,10 +10,12 @@ import { z } from "zod/v4";
 
 import {
   BROWSER_API_PROXY_BASE_URL,
-  getWalletSessionData,
+} from "@/app/_services/api-helpers";
+import { getWalletSessionData } from "@/app/_services/session-service";
+import {
   getWithdrawQuote,
   submitWithdraw,
-} from "@/lib/api-service";
+} from "@/app/withdraw/_services/withdraw-service";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { formatBalance } from "@/lib/utils";
 import { useWalletStore } from "@/store/use-wallet-store";

@@ -1,5 +1,5 @@
 import { PageHeader } from "@/components/layout/page-header";
-import { getBondingPackages } from "@/lib/api-service";
+import { getBondingPackages } from "@/app/bonding/_services/bonding-service";
 import { AddBondingForm } from "./_components/add-bonding-form";
 
 interface AddBondingPageProps {
