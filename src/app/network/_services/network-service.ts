@@ -9,48 +9,41 @@ import {
   toNumber,
   toString,
 } from "@/app/_services/api-helpers";
-import { networkAffiliates } from "@/app/_lib/mock-data";
-import type {
-  NetworkAffiliateLevel,
-  NetworkData,
-  PaginationOptions,
-} from "@/app/_types/api-types";
+import { mockReferralTreeResponse } from "@/app/_lib/mock-data";
+import type { NetworkData, PaginationOptions } from "@/app/_types/api-types";
+
+type ReferralTreeResponse = {
+  levels?: Array<{
+    level?: number;
+    label?: string;
+    members?: Array<{
+      walletAddress?: string;
+      inviteDate?: string;
+      ttoBonus?: number;
+      status?: string;
+    }>;
+    wallets?: Array<{
+      address?: string;
+      inviteDate?: string;
+      ttoBonus?: number;
+      status?: string;
+    }>;
+  }>;
+};
 
 export async function getNetworkData(
   options: PaginationOptions = {}
 ): Promise<NetworkData> {
-  if (USE_MOCK_API) {
-    return resolveMock({
-      affiliates: networkAffiliates as NetworkAffiliateLevel[],
-    });
-  }
-
-  const auth = resolveAuth(options);
-  const tree = await fetchApi<{
-    levels?: Array<{
-      level?: number;
-      label?: string;
-      members?: Array<{
-        walletAddress?: string;
-        inviteDate?: string;
-        ttoBonus?: number;
-        status?: string;
-      }>;
-      wallets?: Array<{
-        address?: string;
-        inviteDate?: string;
-        ttoBonus?: number;
-        status?: string;
-      }>;
-    }>;
-  }>("/v1/referral/tree", {
-    baseURL: options.baseURL,
-    auth,
-    query: {
-      page: options.page ?? 1,
-      limit: options.limit ?? 20,
-    },
-  });
+  const tree: ReferralTreeResponse = USE_MOCK_API
+    ? await resolveMock<ReferralTreeResponse>(mockReferralTreeResponse)
+    : await fetchApi<ReferralTreeResponse>("/v1/referral/tree", {
+        baseURL: options.baseURL,
+        auth: resolveAuth(options),
+        query: {
+          page: options.page ?? 1,
+          limit: options.limit ?? 20,
+        },
+      });
 
   const levels = tree.levels ?? [];
 

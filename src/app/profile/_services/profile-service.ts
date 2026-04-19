@@ -6,37 +6,45 @@ import {
   resolveMock,
   toString,
 } from "@/app/_services/api-helpers";
-import { userProfile } from "@/app/_lib/mock-data";
+import {
+  mockAuthMeResponse,
+  mockTitanStatusResponse,
+  userProfile,
+} from "@/app/_lib/mock-data";
 import type { ApiAuthOptions, ProfileData } from "@/app/_types/api-types";
+
+type AuthMeResponse = {
+  username?: string;
+  walletAddress?: string;
+  walletAddressFull?: string;
+  registeredSince?: string;
+  invitedByAddress?: string;
+  affiliateLink?: string;
+};
+
+type TitanStatusResponse = {
+  currentLevelLabel?: string;
+  currentLevel?: number;
+};
 
 export async function getProfileData(
   options: ApiAuthOptions = {}
 ): Promise<ProfileData> {
-  if (USE_MOCK_API) {
-    return resolveMock(userProfile as ProfileData);
-  }
-
-  const auth = resolveAuth(options);
-  const [me, titanStatus] = await Promise.all([
-    fetchApi<{
-      username?: string;
-      walletAddress?: string;
-      walletAddressFull?: string;
-      registeredSince?: string;
-      invitedByAddress?: string;
-      affiliateLink?: string;
-    }>("/v1/auth/me", {
-      baseURL: options.baseURL,
-      auth,
-    }),
-    fetchApi<{
-      currentLevelLabel?: string;
-      currentLevel?: number;
-    }>("/v1/titan/status", {
-      baseURL: options.baseURL,
-      auth,
-    }),
-  ]);
+  const [me, titanStatus] = USE_MOCK_API
+    ? await Promise.all([
+        resolveMock<AuthMeResponse>(mockAuthMeResponse),
+        resolveMock<TitanStatusResponse>(mockTitanStatusResponse),
+      ])
+    : await Promise.all([
+        fetchApi<AuthMeResponse>("/v1/auth/me", {
+          baseURL: options.baseURL,
+          auth: resolveAuth(options),
+        }),
+        fetchApi<TitanStatusResponse>("/v1/titan/status", {
+          baseURL: options.baseURL,
+          auth: resolveAuth(options),
+        }),
+      ]);
 
   const fallbackWallet = toString(me.walletAddressFull ?? me.walletAddress);
 

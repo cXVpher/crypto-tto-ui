@@ -9,7 +9,10 @@ import {
   toNumber,
   toString,
 } from "@/app/_services/api-helpers";
-import { bondingPackages, myBondingList } from "@/app/_lib/mock-data";
+import {
+  mockBondingHistoryResponse,
+  mockBondingPackagesResponse,
+} from "@/app/_lib/mock-data";
 import type {
   ApiAuthOptions,
   ApiRequestOptions,
@@ -23,8 +26,38 @@ import type {
 export async function getBondingPackages(
   options: ApiRequestOptions = {}
 ): Promise<BondingPackage[]> {
+  const mapPackage = (
+    item: {
+      id?: string | number;
+      packageId?: string;
+      label?: string;
+      name?: string;
+      days?: number;
+      durationDays?: number;
+      dailyProfit?: number;
+      dailyRate?: number;
+      minAmount?: number;
+      minTtoAmount?: number;
+    },
+    index: number
+  ) => {
+    const fallbackDays = toNumber(item.packageId?.replace(/\D/g, ""), index + 1);
+    const days = toNumber(item.days ?? item.durationDays, fallbackDays);
+    const dailyRate = toNumber(item.dailyRate);
+
+    return {
+      id: item.id ?? item.packageId ?? index + 1,
+      name: toString(item.name ?? item.label, `${days} Days Pack`),
+      days,
+      dailyProfit: toNumber(item.dailyProfit, dailyRate > 0 ? dailyRate * 100 : 0),
+      minAmount: toNumber(item.minAmount ?? item.minTtoAmount, 100),
+      icon: "fire",
+    };
+  };
+
   if (USE_MOCK_API) {
-    return resolveMock(bondingPackages as BondingPackage[]);
+    const packages = await resolveMock(mockBondingPackagesResponse);
+    return packages.map(mapPackage);
   }
 
   const packages = await fetchApi<
@@ -44,32 +77,14 @@ export async function getBondingPackages(
     baseURL: options.baseURL,
   });
 
-  return packages.map((item, index) => {
-    const fallbackDays = toNumber(item.packageId?.replace(/\D/g, ""), index + 1);
-    const days = toNumber(item.days ?? item.durationDays, fallbackDays);
-    const dailyRate = toNumber(item.dailyRate);
-
-    return {
-      id: item.id ?? item.packageId ?? index + 1,
-      name: toString(item.name ?? item.label, `${days} Days Pack`),
-      days,
-      dailyProfit: toNumber(item.dailyProfit, dailyRate > 0 ? dailyRate * 100 : 0),
-      minAmount: toNumber(item.minAmount ?? item.minTtoAmount, 100),
-      icon: "fire",
-    };
-  });
+  return packages.map(mapPackage);
 }
 
 export async function getMyBondingList(
   options: PaginationOptions = {}
 ): Promise<BondingItem[]> {
-  if (USE_MOCK_API) {
-    return resolveMock(myBondingList as BondingItem[]);
-  }
-
-  const auth = resolveAuth(options);
-  const bondingHistory = await fetchApi<
-    Array<{
+  const mapHistoryItem = (
+    item: {
       id?: string | number;
       packageLabel?: string;
       packageName?: string;
@@ -82,30 +97,50 @@ export async function getMyBondingList(
       startedAt?: string;
       endDate?: string;
       endsAt?: string;
-    }>
-  >("/v1/bonding/history", {
-    baseURL: options.baseURL,
-    auth,
-    query: {
-      page: options.page ?? 1,
-      limit: options.limit ?? 100,
     },
+    index: number
+  ) => ({
+    id: item.id ?? index + 1,
+    packageName: toString(
+      item.packageName ?? item.packageLabel ?? item.packageId,
+      "Bonding Package"
+    ),
+    amount: toNumber(item.amount ?? item.principalTto ?? item.ttoAmount),
+    token: TOKEN_SYMBOL,
+    status: formatStatusLabel(item.status, "Running"),
+    startDate: formatDate(item.startDate ?? item.startedAt),
+    endDate: formatDate(item.endDate ?? item.endsAt),
   });
+
+  const bondingHistory = USE_MOCK_API
+    ? await resolveMock(mockBondingHistoryResponse)
+    : await fetchApi<
+        Array<{
+          id?: string | number;
+          packageLabel?: string;
+          packageName?: string;
+          packageId?: string;
+          principalTto?: number;
+          amount?: number;
+          ttoAmount?: number;
+          status?: string;
+          startDate?: string;
+          startedAt?: string;
+          endDate?: string;
+          endsAt?: string;
+        }>
+      >("/v1/bonding/history", {
+        baseURL: options.baseURL,
+        auth: resolveAuth(options),
+        query: {
+          page: options.page ?? 1,
+          limit: options.limit ?? 100,
+        },
+      });
 
   return bondingHistory
     .filter((item) => toString(item.status).toUpperCase() === "RUNNING")
-    .map((item, index) => ({
-      id: item.id ?? index + 1,
-      packageName: toString(
-        item.packageName ?? item.packageLabel ?? item.packageId,
-        "Bonding Package"
-      ),
-      amount: toNumber(item.amount ?? item.principalTto ?? item.ttoAmount),
-      token: TOKEN_SYMBOL,
-      status: formatStatusLabel(item.status, "Running"),
-      startDate: formatDate(item.startDate ?? item.startedAt),
-      endDate: formatDate(item.endDate ?? item.endsAt),
-    }));
+    .map(mapHistoryItem);
 }
 
 export async function startBonding(

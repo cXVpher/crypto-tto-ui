@@ -2,184 +2,189 @@ export const TOKEN_NAME = "TitanToon";
 export const TOKEN_SYMBOL = "TTO";
 export const TOKEN_PRICE_USDT = 0.2;
 
-export const bondingPackages = [
+export const mockBondingPackagesResponse = [
   {
-    id: 1,
-    name: "30 Days Launch",
-    days: 30,
-    dailyProfit: 0.45,
-    minAmount: 100,
-    icon: "fire",
+    id: "pkg-30",
+    packageId: "pkg-30",
+    label: "30 Days Launch",
+    durationDays: 30,
+    dailyRate: 0.0045,
+    minTtoAmount: 100,
   },
   {
-    id: 2,
-    name: "90 Days Core",
-    days: 90,
-    dailyProfit: 0.72,
-    minAmount: 100,
-    icon: "fire",
+    id: "pkg-90",
+    packageId: "pkg-90",
+    label: "90 Days Core",
+    durationDays: 90,
+    dailyRate: 0.0072,
+    minTtoAmount: 100,
   },
   {
-    id: 3,
-    name: "180 Days Atlas",
-    days: 180,
-    dailyProfit: 0.96,
-    minAmount: 100,
-    icon: "fire",
+    id: "pkg-180",
+    packageId: "pkg-180",
+    label: "180 Days Atlas",
+    durationDays: 180,
+    dailyRate: 0.0096,
+    minTtoAmount: 100,
   },
   {
-    id: 4,
-    name: "365 Days Titan",
-    days: 365,
-    dailyProfit: 1.32,
-    minAmount: 100,
-    icon: "fire",
-  },
-];
-
-export const myBondingList = [
-  {
-    id: 1,
-    packageName: "365 Days Titan",
-    amount: 18000,
-    token: "TTO",
-    status: "Running",
-    startDate: "24 Jan 2026",
-    endDate: "23 Jan 2027",
-  },
-  {
-    id: 2,
-    packageName: "365 Days Titan",
-    amount: 35000,
-    token: "TTO",
-    status: "Running",
-    startDate: "23 Jan 2026",
-    endDate: "22 Jan 2027",
-  },
-  {
-    id: 3,
-    packageName: "90 Days Core",
-    amount: 70.6,
-    token: "TTO",
-    status: "Running",
-    startDate: "17 Jan 2026",
-    endDate: "16 Jan 2027",
+    id: "pkg-365",
+    packageId: "pkg-365",
+    label: "365 Days Titan",
+    durationDays: 365,
+    dailyRate: 0.0132,
+    minTtoAmount: 100,
   },
 ];
 
-export const networkAffiliates = [
+export const mockBondingHistoryResponse = [
   {
-    level: 1,
-    label: "LV-01",
-    wallets: [
-      {
-        address: "0x473D9e1ea37C161D96cB",
-        bonusTto: 7010.08,
-        inviteDate: "03 Dec 2025 15:08 UTC",
-        status: "Bonding",
-      },
-      {
-        address: "0x28307fA99Ab63aa5ddc4",
-        bonusTto: 0,
-        inviteDate: "11 Dec 2025 16:33 UTC",
-        status: "Not Bonding",
-      },
-    ],
+    id: "bond-01",
+    packageId: "pkg-365",
+    packageLabel: "365 Days Titan",
+    principalTto: 18000,
+    status: "running",
+    startDate: "2026-01-24T00:00:00.000Z",
+    endDate: "2027-01-23T00:00:00.000Z",
   },
   {
-    level: 2,
-    label: "LV-02",
-    wallets: [
-      {
-        address: "0xBD45b04534e53d4a83",
-        bonusTto: 1064.43,
-        inviteDate: "03 Dec 2025 04:50 UTC",
-        status: "Bonding",
-      },
-      {
-        address: "0xa3f16879b38c0d6a7658",
-        bonusTto: 0,
-        inviteDate: "10 Mar 2026 01:04 UTC",
-        status: "Not Bonding",
-      },
-      {
-        address: "0xFe86D4e697a7fA673f3D",
-        bonusTto: 700,
-        inviteDate: "10 Jan 2026 03:09 UTC",
-        status: "Bonding",
-      },
-    ],
+    id: "bond-02",
+    packageId: "pkg-365",
+    packageLabel: "365 Days Titan",
+    principalTto: 35000,
+    status: "running",
+    startDate: "2026-01-23T00:00:00.000Z",
+    endDate: "2027-01-22T00:00:00.000Z",
+  },
+  {
+    id: "bond-03",
+    packageId: "pkg-90",
+    packageLabel: "90 Days Core",
+    principalTto: 70.6,
+    status: "running",
+    startDate: "2026-01-17T00:00:00.000Z",
+    endDate: "2026-04-17T00:00:00.000Z",
   },
 ];
 
-export const swapHistory = [
+export const mockReferralTreeResponse = {
+  levels: [
+    {
+      level: 1,
+      label: "LV-01",
+      members: [
+        {
+          walletAddress: "0x473D9e1ea37C161D96cB",
+          ttoBonus: 7010.08,
+          inviteDate: "2025-12-03T15:08:00.000Z",
+          status: "bonding",
+        },
+        {
+          walletAddress: "0x28307fA99Ab63aa5ddc4",
+          ttoBonus: 0,
+          inviteDate: "2025-12-11T16:33:00.000Z",
+          status: "not_bonding",
+        },
+      ],
+    },
+    {
+      level: 2,
+      label: "LV-02",
+      members: [
+        {
+          walletAddress: "0xBD45b04534e53d4a83",
+          ttoBonus: 1064.43,
+          inviteDate: "2025-12-03T04:50:00.000Z",
+          status: "bonding",
+        },
+        {
+          walletAddress: "0xa3f16879b38c0d6a7658",
+          ttoBonus: 0,
+          inviteDate: "2026-03-10T01:04:00.000Z",
+          status: "not_bonding",
+        },
+        {
+          walletAddress: "0xFe86D4e697a7fA673f3D",
+          ttoBonus: 700,
+          inviteDate: "2026-01-10T03:09:00.000Z",
+          status: "bonding",
+        },
+      ],
+    },
+  ],
+};
+
+export const mockSwapHistoryResponse = [
   {
-    id: 1,
-    fromAmount: 500,
-    fromToken: "TTO",
-    toAmount: 99,
-    toToken: "USDT",
-    date: "15 Mar 2026",
-    status: "Completed",
+    id: "swap-01",
+    ttoAmount: 500,
+    netUsdt: 99,
+    completedAt: "2026-03-15T00:00:00.000Z",
+    status: "completed",
   },
   {
-    id: 2,
-    fromAmount: 1000,
-    fromToken: "TTO",
-    toAmount: 198,
-    toToken: "USDT",
-    date: "10 Mar 2026",
-    status: "Completed",
+    id: "swap-02",
+    ttoAmount: 1000,
+    netUsdt: 198,
+    completedAt: "2026-03-10T00:00:00.000Z",
+    status: "completed",
   },
 ];
 
-export const purchaseHistory = [
+export const mockDepositHistoryResponse = [
   {
-    id: 1,
-    amount: 500,
-    token: "USDT",
-    received: 2500,
-    receivedToken: "TTO",
-    date: "20 Mar 2026",
-    status: "Completed",
+    id: "dep-01",
+    usdtAmount: 500,
+    ttoAmount: 2500,
+    completedAt: "2026-03-20T00:00:00.000Z",
+    status: "completed",
   },
   {
-    id: 2,
-    amount: 1000,
-    token: "USDT",
-    received: 5000,
-    receivedToken: "TTO",
-    date: "15 Mar 2026",
-    status: "Completed",
+    id: "dep-02",
+    usdtAmount: 1000,
+    ttoAmount: 5000,
+    completedAt: "2026-03-15T00:00:00.000Z",
+    status: "completed",
   },
 ];
 
-export const withdrawHistory = [
+export const mockWithdrawHistoryResponse = [
   {
-    id: 1,
-    amount: 1200,
-    token: "USDT",
-    wallet: "0x473D9e1ea37C161D96cB",
-    fee: 0.5,
-    date: "26 Mar 2026",
-    status: "Completed",
+    id: "wd-01",
+    usdtAmount: 1200,
+    recipientAddress: "0x473D9e1ea37C161D96cB",
+    networkFeeUsdt: 0.5,
+    completedAt: "2026-03-26T00:00:00.000Z",
+    status: "completed",
   },
   {
-    id: 2,
-    amount: 500,
-    token: "USDT",
-    wallet: "0xBD45b04534e53d4a83",
-    fee: 0.5,
-    date: "18 Mar 2026",
-    status: "Processing",
+    id: "wd-02",
+    usdtAmount: 500,
+    recipientAddress: "0xBD45b04534e53d4a83",
+    networkFeeUsdt: 0.5,
+    createdAt: "2026-03-18T00:00:00.000Z",
+    status: "processing",
   },
 ];
+
+export const mockAuthMeResponse = {
+  username: "UserCaFA53C098",
+  walletAddress: "0xCaFA53C098B1d7a51234",
+  registeredSince: "2025-12-01T15:58:00.000Z",
+  invitedByAddress: "0xf3aEF0...D04",
+  affiliateLink: "https://titantoon.io/start?ref=TTO-C4FA53",
+};
+
+export const mockTitanStatusResponse = {
+  currentLevel: 4,
+  currentLevelLabel: "Titan 4",
+};
 
 export const userProfile = {
-  username: "UserCaFA53C098",
-  rankLevel: "Titan 4",
-  registeredSince: "01 Dec 2025, 15:58 UTC",
-  invitedBy: "0xf3aEF0...D04",
-  affiliateLink: "https://titantoon.io/start?ref=TTO-C4FA53",
+  username: mockAuthMeResponse.username,
+  rankLevel: mockTitanStatusResponse.currentLevelLabel,
+  registeredSince: "01 Dec 2025 15:58 UTC",
+  invitedBy: mockAuthMeResponse.invitedByAddress,
+  affiliateLink: mockAuthMeResponse.affiliateLink,
   version: "v 1.24.03 (Alpha)",
 };

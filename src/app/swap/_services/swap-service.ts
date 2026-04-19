@@ -10,7 +10,7 @@ import {
   toNumber,
   toString,
 } from "@/app/_services/api-helpers";
-import { swapHistory } from "@/app/_lib/mock-data";
+import { mockSwapHistoryResponse } from "@/app/_lib/mock-data";
 import type {
   ApiAuthOptions,
   ApiRequestOptions,
@@ -20,6 +20,21 @@ import type {
   SwapQuoteData,
   SwapRateConfig,
 } from "@/app/_types/api-types";
+
+type SwapHistoryResponseItem = {
+  id?: string | number;
+  ttoAmount?: number;
+  fromAmount?: number;
+  fromToken?: string;
+  netUsdt?: number;
+  usdtAmount?: number;
+  toAmount?: number;
+  toToken?: string;
+  createdAt?: string;
+  completedAt?: string;
+  date?: string;
+  status?: string;
+};
 
 export async function getSwapRateData(
   options: ApiRequestOptions = {}
@@ -85,34 +100,16 @@ export async function executeSwap(
 export async function getSwapHistoryData(
   options: PaginationOptions = {}
 ): Promise<SwapHistoryItem[]> {
-  if (USE_MOCK_API) {
-    return resolveMock(swapHistory as SwapHistoryItem[]);
-  }
-
-  const auth = resolveAuth(options);
-  const history = await fetchApi<
-    Array<{
-      id?: string | number;
-      ttoAmount?: number;
-      fromAmount?: number;
-      fromToken?: string;
-      netUsdt?: number;
-      usdtAmount?: number;
-      toAmount?: number;
-      toToken?: string;
-      createdAt?: string;
-      completedAt?: string;
-      date?: string;
-      status?: string;
-    }>
-  >("/v1/swap/history", {
-    baseURL: options.baseURL,
-    auth,
-    query: {
-      page: options.page ?? 1,
-      limit: options.limit ?? 10,
-    },
-  });
+  const history = USE_MOCK_API
+    ? await resolveMock<SwapHistoryResponseItem[]>(mockSwapHistoryResponse)
+    : await fetchApi<SwapHistoryResponseItem[]>("/v1/swap/history", {
+        baseURL: options.baseURL,
+        auth: resolveAuth(options),
+        query: {
+          page: options.page ?? 1,
+          limit: options.limit ?? 10,
+        },
+      });
 
   return history.map((item, index) => ({
     id: item.id ?? index + 1,

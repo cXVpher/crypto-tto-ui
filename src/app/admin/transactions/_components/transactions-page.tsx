@@ -29,6 +29,13 @@ import { retryAdminWithdrawalAction } from "@/app/admin/_services/dashboard-acti
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Sheet,
   SheetContent,
   SheetDescription,
@@ -89,19 +96,27 @@ function TransactionsFilters({
         placeholder="Filter by username"
         className="h-11 rounded-2xl border-white/10 bg-white/5"
       />
-      <select
+      <Select
         value={statusFilter}
-        onChange={(event) => onStatusFilterChange(event.target.value)}
-        className="h-11 rounded-2xl border border-white/10 bg-white/5 px-4 text-sm text-slate-100 outline-none"
+        onValueChange={(value) => {
+          if (value) {
+            onStatusFilterChange(value);
+          }
+        }}
       >
-        <option value="ALL">All statuses</option>
-        <option value="COMPLETED">Completed</option>
-        <option value="PENDING">Pending</option>
-        <option value="VERIFIED">Verified</option>
-        <option value="PROCESSING">Processing</option>
-        <option value="REVIEW">Review</option>
-        <option value="FAILED">Failed</option>
-      </select>
+        <SelectTrigger className="h-11 w-full rounded-2xl border-white/10 bg-white/5 px-4 text-sm text-slate-100">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent className="rounded-2xl border border-white/10 bg-[#081224] text-slate-100">
+          <SelectItem value="ALL">All statuses</SelectItem>
+          <SelectItem value="COMPLETED">Completed</SelectItem>
+          <SelectItem value="PENDING">Pending</SelectItem>
+          <SelectItem value="VERIFIED">Verified</SelectItem>
+          <SelectItem value="PROCESSING">Processing</SelectItem>
+          <SelectItem value="REVIEW">Review</SelectItem>
+          <SelectItem value="FAILED">Failed</SelectItem>
+        </SelectContent>
+      </Select>
       <Input
         type="date"
         value={startDate}
@@ -595,21 +610,21 @@ export function TransactionsPage({ transactionsData }: TransactionsPageProps) {
               renderCard={(item) => (
                 <article
                   key={item.id}
-                  className="rounded-[1.5rem] border border-white/8 bg-[#081224]/80 p-4"
+                  className="relative rounded-[1.5rem] border border-white/8 bg-[#081224]/80 p-4"
                 >
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="pr-28">
                     <div>
                       <p className="font-semibold text-white">{item.user}</p>
                       <p className="mt-1 text-sm text-slate-400">{item.date}</p>
                     </div>
-                    <span
-                      className={`rounded-full border px-2.5 py-1 text-xs font-medium ${getStatusClasses(
-                        item.status
-                      )}`}
-                    >
-                      {item.status}
-                    </span>
                   </div>
+                  <span
+                    className={`absolute right-4 top-4 rounded-full border px-2.5 py-1 text-xs font-medium ${getStatusClasses(
+                      item.status
+                    )}`}
+                  >
+                    {item.status}
+                  </span>
                   <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
                     <div>
                       <p className="text-slate-500">USDT</p>
@@ -642,21 +657,21 @@ export function TransactionsPage({ transactionsData }: TransactionsPageProps) {
               renderCard={(item) => (
                 <article
                   key={item.id}
-                  className="rounded-[1.5rem] border border-white/8 bg-[#081224]/80 p-4"
+                  className="relative rounded-[1.5rem] border border-white/8 bg-[#081224]/80 p-4"
                 >
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="pr-28">
                     <div>
                       <p className="font-semibold text-white">{item.user}</p>
                       <p className="mt-1 text-sm text-slate-400">{item.date}</p>
                     </div>
-                    <span
-                      className={`rounded-full border px-2.5 py-1 text-xs font-medium ${getStatusClasses(
-                        item.status
-                      )}`}
-                    >
-                      {item.status}
-                    </span>
                   </div>
+                  <span
+                    className={`absolute right-4 top-4 rounded-full border px-2.5 py-1 text-xs font-medium ${getStatusClasses(
+                      item.status
+                    )}`}
+                  >
+                    {item.status}
+                  </span>
                   <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
                     <div>
                       <p className="text-slate-500">From</p>
@@ -689,21 +704,21 @@ export function TransactionsPage({ transactionsData }: TransactionsPageProps) {
               renderCard={(item) => (
                 <article
                   key={item.id}
-                  className="rounded-[1.5rem] border border-white/8 bg-[#081224]/80 p-4"
+                  className="relative rounded-[1.5rem] border border-white/8 bg-[#081224]/80 p-4"
                 >
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="pr-28">
                     <div>
                       <p className="font-semibold text-white">{item.user}</p>
                       <p className="mt-1 text-sm text-slate-400">{item.wallet}</p>
                     </div>
-                    <span
-                      className={`rounded-full border px-2.5 py-1 text-xs font-medium ${getStatusClasses(
-                        item.status
-                      )}`}
-                    >
-                      {item.status}
-                    </span>
                   </div>
+                  <span
+                    className={`absolute right-4 top-4 rounded-full border px-2.5 py-1 text-xs font-medium ${getStatusClasses(
+                      item.status
+                    )}`}
+                  >
+                    {item.status}
+                  </span>
                   <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
                     <div>
                       <p className="text-slate-500">Amount</p>

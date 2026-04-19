@@ -8,7 +8,7 @@ import {
   toNumber,
   toString,
 } from "@/app/_services/api-helpers";
-import { withdrawHistory } from "@/app/_lib/mock-data";
+import { mockWithdrawHistoryResponse } from "@/app/_lib/mock-data";
 import type {
   ApiAuthOptions,
   PaginationOptions,
@@ -16,6 +16,22 @@ import type {
   WithdrawQuoteData,
   WithdrawSubmissionResult,
 } from "@/app/_types/api-types";
+
+type WithdrawHistoryResponseItem = {
+  id?: string | number;
+  amount?: number;
+  usdtAmount?: number;
+  token?: string;
+  wallet?: string;
+  recipientAddress?: string;
+  fee?: number;
+  feeAmount?: number;
+  networkFeeUsdt?: number;
+  createdAt?: string;
+  completedAt?: string;
+  date?: string;
+  status?: string;
+};
 
 export async function getWithdrawQuote(
   amount: number,
@@ -53,35 +69,16 @@ export async function submitWithdraw(
 export async function getWithdrawHistoryData(
   options: PaginationOptions = {}
 ): Promise<WithdrawHistoryItem[]> {
-  if (USE_MOCK_API) {
-    return resolveMock(withdrawHistory as WithdrawHistoryItem[]);
-  }
-
-  const auth = resolveAuth(options);
-  const history = await fetchApi<
-    Array<{
-      id?: string | number;
-      amount?: number;
-      usdtAmount?: number;
-      token?: string;
-      wallet?: string;
-      recipientAddress?: string;
-      fee?: number;
-      feeAmount?: number;
-      networkFeeUsdt?: number;
-      createdAt?: string;
-      completedAt?: string;
-      date?: string;
-      status?: string;
-    }>
-  >("/v1/withdraw/history", {
-    baseURL: options.baseURL,
-    auth,
-    query: {
-      page: options.page ?? 1,
-      limit: options.limit ?? 10,
-    },
-  });
+  const history = USE_MOCK_API
+    ? await resolveMock<WithdrawHistoryResponseItem[]>(mockWithdrawHistoryResponse)
+    : await fetchApi<WithdrawHistoryResponseItem[]>("/v1/withdraw/history", {
+        baseURL: options.baseURL,
+        auth: resolveAuth(options),
+        query: {
+          page: options.page ?? 1,
+          limit: options.limit ?? 10,
+        },
+      });
 
   return history.map((item, index) => ({
     id: item.id ?? index + 1,

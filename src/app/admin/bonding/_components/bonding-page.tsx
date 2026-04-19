@@ -1,7 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { PencilSimple, Plus, ToggleLeft, ToggleRight } from "@phosphor-icons/react";
+import {
+  PencilSimple,
+  Plus,
+  ToggleLeft,
+  ToggleRight,
+} from "@phosphor-icons/react";
 
 import { AdminConfirmDialog } from "@/app/admin/_components/admin-confirm-dialog";
 import { DataTable, type DataTableColumn } from "@/app/admin/_components/data-table";
@@ -28,6 +33,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface BondingPageProps {
   bondingData: AdminBondingData;
@@ -429,15 +441,23 @@ export function BondingPage({ bondingData }: BondingPageProps) {
           ) : null}
 
           <div className="mt-5 grid gap-3 md:grid-cols-[220px_minmax(0,1fr)]">
-            <select
+            <Select
               value={packageStatusFilter}
-              onChange={(event) => setPackageStatusFilter(event.target.value)}
-              className="h-11 rounded-2xl border border-white/10 bg-white/5 px-4 text-sm text-slate-100 outline-none"
+              onValueChange={(value) => {
+                if (value) {
+                  setPackageStatusFilter(value);
+                }
+              }}
             >
-              <option value="ALL">All package statuses</option>
-              <option value="ACTIVE">Active</option>
-              <option value="INACTIVE">Inactive</option>
-            </select>
+              <SelectTrigger className="h-11 w-full rounded-2xl border-white/10 bg-white/5 px-4 text-sm text-slate-100">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="rounded-2xl border border-white/10 bg-[#081224] text-slate-100">
+                <SelectItem value="ALL">All package statuses</SelectItem>
+                <SelectItem value="ACTIVE">Active</SelectItem>
+                <SelectItem value="INACTIVE">Inactive</SelectItem>
+              </SelectContent>
+            </Select>
             <div className="rounded-[1.5rem] border border-white/8 bg-white/4 px-4 py-3 text-sm text-slate-400">
               {isMockMode
                 ? "Changes are local in mock mode and are meant to validate the admin workflow before live mutations are used."
@@ -530,28 +550,44 @@ export function BondingPage({ bondingData }: BondingPageProps) {
         </div>
 
         <div className="grid gap-3 md:grid-cols-[220px_220px]">
-          <select
+          <Select
             value={packageFilter}
-            onChange={(event) => setPackageFilter(event.target.value)}
-            className="h-11 rounded-2xl border border-white/10 bg-white/5 px-4 text-sm text-slate-100 outline-none"
+            onValueChange={(value) => {
+              if (value) {
+                setPackageFilter(value);
+              }
+            }}
           >
-            <option value="ALL">All package names</option>
-            {packages.map((item) => (
-              <option key={item.id} value={item.name}>
-                {item.name}
-              </option>
-            ))}
-          </select>
-          <select
+            <SelectTrigger className="h-11 w-full rounded-2xl border-white/10 bg-white/5 px-4 text-sm text-slate-100">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="rounded-2xl border border-white/10 bg-[#081224] text-slate-100">
+              <SelectItem value="ALL">All package names</SelectItem>
+              {packages.map((item) => (
+                <SelectItem key={item.id} value={item.name}>
+                  {item.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select
             value={bondingStatusFilter}
-            onChange={(event) => setBondingStatusFilter(event.target.value)}
-            className="h-11 rounded-2xl border border-white/10 bg-white/5 px-4 text-sm text-slate-100 outline-none"
+            onValueChange={(value) => {
+              if (value) {
+                setBondingStatusFilter(value);
+              }
+            }}
           >
-            <option value="ALL">All bonding statuses</option>
-            <option value="RUNNING">Running</option>
-            <option value="PENDING">Pending</option>
-            <option value="MATURED">Matured</option>
-          </select>
+            <SelectTrigger className="h-11 w-full rounded-2xl border-white/10 bg-white/5 px-4 text-sm text-slate-100">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="rounded-2xl border border-white/10 bg-[#081224] text-slate-100">
+              <SelectItem value="ALL">All bonding statuses</SelectItem>
+              <SelectItem value="RUNNING">Running</SelectItem>
+              <SelectItem value="PENDING">Pending</SelectItem>
+              <SelectItem value="MATURED">Matured</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="mt-5">
@@ -563,21 +599,21 @@ export function BondingPage({ bondingData }: BondingPageProps) {
             renderCard={(item) => (
               <article
                 key={item.id}
-                className="rounded-[1.5rem] border border-white/8 bg-[#081224]/80 p-4"
+                className="relative rounded-[1.5rem] border border-white/8 bg-[#081224]/80 p-4"
               >
-                <div className="flex items-start justify-between gap-3">
+                <div className="pr-28">
                   <div>
                     <p className="font-semibold text-white">{item.packageName}</p>
                     <p className="mt-1 text-sm text-slate-400">{item.userWallet}</p>
                   </div>
-                  <span
-                    className={`rounded-full border px-2.5 py-1 text-xs font-medium ${getStatusClasses(
-                      item.status
-                    )}`}
-                  >
-                    {item.status}
-                  </span>
                 </div>
+                <span
+                  className={`absolute right-4 top-4 rounded-full border px-2.5 py-1 text-xs font-medium ${getStatusClasses(
+                    item.status
+                  )}`}
+                >
+                  {item.status}
+                </span>
                 <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
                   <div>
                     <p className="text-slate-500">Amount</p>

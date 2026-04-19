@@ -7,6 +7,7 @@
 - Added frontend-only live admin mutation support in `src/app/admin/dashboard-actions.ts` for user suspension, bonding rate updates, withdrawal retry, TTO price updates, and fee updates, with the admin UI now exposing or hiding controls based on backend capability flags instead of assuming every mock action exists in live mode.
 
 ## fix
+- Fixed the admin and public mock data layers to use API-shaped payloads and the same normalization flow as live responses, and replaced the remaining admin native filter selects with the shared shadcn-style `Select` component.
 - Fixed the admin login runtime error caused by exporting a non-async value from a `"use server"` module by moving the login action state into `src/app/admin/action-types.ts` and keeping `src/app/admin/actions.ts` limited to async server functions.
 - Fixed admin navigation state handling so `/admin` only highlights the overview route itself while nested admin pages correctly mark the matching sidebar item, and the mobile `More` action now shows an active state when one of its hidden routes is open.
 - Fixed the frontend/backend contract mismatches across bonding, referral, swap, history, and profile screens by remapping the real service payloads, switching purchase history to deposit history, reading withdraw network fees correctly, consuming backend affiliate links as-is, and aligning status/rank labels with the API response shape.
@@ -26,6 +27,7 @@
 ## docs
 
 ## style
+- Updated the admin bonding and transactions mobile card layouts so status badges stay aligned inside the card bounds, and standardized admin filter controls to the shared shadcn-style select appearance for consistent dropdown styling across dashboard pages.
 - Restyled the admin shell and overview for a tighter mobile-first layout by centering the overview inside a compact frame, improving card/chart spacing and horizontal metric scrolling on small screens, and replacing the users page native dropdown filters with the existing custom select components.
 - Updated the public app UI copy and presentation to match the live backend behavior, including bonding/network/history status rendering, withdraw page wording, profile field mapping, and swap/purchase form states for the real API flow.
 

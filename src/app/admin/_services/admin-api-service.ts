@@ -4,7 +4,6 @@ import { fetchAdminBackendApi } from "@/app/admin/_services/admin-backend-api";
 import { fetchApi } from "@/lib/fetcher";
 import {
   adminActiveBondings,
-  adminBondingPackages,
   adminPurchases,
   adminRecentActivity,
   adminRevenueSeries,
@@ -14,6 +13,12 @@ import {
   adminUserGrowthSeries,
   adminUsers,
   adminWithdrawals,
+  mockAdminBondingConfigResponse,
+  mockAdminBondingsResponse,
+  mockAdminDepositsResponse,
+  mockAdminUserMetaById,
+  mockAdminUsersResponse,
+  mockAdminWithdrawalsResponse,
 } from "@/app/admin/_services/admin-mock-data";
 import type {
   AdminBondingData,
@@ -32,6 +37,7 @@ import type {
   AdminUsersData,
   AdminWithdrawal,
 } from "@/app/admin/_types/admin-types";
+import { mockBondingPackagesResponse } from "@/app/_lib/mock-data";
 
 const USE_MOCK_API = process.env.NEXT_PUBLIC_USE_MOCK_API === "true";
 const MOCK_DELAY_MS = 250;
@@ -324,29 +330,60 @@ function getAdminOverviewMockData(): AdminOverviewData {
   };
 }
 
-function getMockUserContexts(): Record<string, AdminUserContext> {
-  return Object.fromEntries(
-    adminUsers.map((user) => [
-      user.id,
-      {
-        bondings: adminActiveBondings.filter(
-          (item) => item.userWallet === user.walletAddress
-        ),
-        purchases: adminPurchases.filter((item) => item.user === user.username),
-        swaps: adminSwaps.filter((item) => item.user === user.username),
-        withdrawals: adminWithdrawals.filter((item) => item.user === user.username),
-      },
-    ])
-  );
-}
-
 function getAdminUsersMockData(): AdminUsersData {
+  const users = mockAdminUsersResponse.map((item) => {
+    const walletAddress = toString(item.walletAddress);
+    const activeBondings = toNumber(item.activeBondings);
+    const meta = mockAdminUserMetaById[toString(item.id)];
+
+    return {
+      id: toString(item.id),
+      walletAddress,
+      username: deriveUsername(walletAddress),
+      rank: getRankLabel(toNumber(item.titanLevel)),
+      registeredAt: formatAdminDate(item.createdAt, false),
+      totalBonding: toNumber(item.totalPersonalBonding),
+      status: meta?.status ?? "ACTIVE",
+      bondingStatus:
+        meta?.status === "SUSPENDED"
+          ? "ENDED"
+          : activeBondings > 0
+            ? "RUNNING"
+            : "IDLE",
+      referrals: toNumber(item.totalDownline),
+      lastActive: meta?.lastActive ?? "Unavailable",
+      isAdmin: Boolean(item.isAdmin),
+      ttoBalance: toNumber(item.ttoBalance),
+      ttoLocked: toNumber(item.ttoLocked),
+      usdtBalance: toNumber(item.usdtBalance),
+    } satisfies AdminUser;
+  });
+
+  const packageLabelById = new Map(
+    mockAdminBondingConfigResponse.map((item) => [toString(item.packageId), toString(item.label)])
+  );
+  const bondings = mockAdminBondingsResponse.map((item) => ({
+    id: toString(item.id),
+    userWallet: toString(item.walletAddress),
+    packageName:
+      packageLabelById.get(toString(item.packageId)) ?? toString(item.packageId, "Package"),
+    amount: toNumber(item.principalTto),
+    startDate: formatAdminDate(item.startDate, false),
+    endDate: formatAdminDate(item.endDate, false),
+    status: mapLiveBondingStatus(toString(item.status, "active")),
+  }));
+  const purchases = mockAdminDepositsResponse.map(mapAdminPurchase);
+  const withdrawals = mockAdminWithdrawalsResponse.map(mapAdminWithdrawal);
+  const userIdToWallet = new Map(
+    mockAdminBondingsResponse.map((item) => [toString(item.userId), toString(item.walletAddress)])
+  );
+
   return {
     meta: {
       source: "mock",
     },
-    users: adminUsers,
-    contexts: getMockUserContexts(),
+    users,
+    contexts: buildLiveUserContexts(users, bondings, purchases, withdrawals, userIdToWallet),
     capabilities: {
       suspend: true,
     },
@@ -390,9 +427,39 @@ function buildBondingSummary(
 }
 
 function getAdminBondingMockData(): AdminBondingData {
-  const packageBreakdown = adminBondingPackages.map((item) => ({
+  const publicPackageById = new Map(
+    mockBondingPackagesResponse.map((item) => [toString(item.packageId ?? item.id), item])
+  );
+  const packages = mockAdminBondingConfigResponse.map((item) => {
+    const publicPackage = publicPackageById.get(toString(item.packageId));
+
+    return {
+      id: toString(item.packageId),
+      packageId: toString(item.packageId),
+      name: toString(item.label, toString(item.packageId, "Bonding Package")),
+      durationDays: toNumber(publicPackage?.durationDays),
+      dailyProfitRate: round(toNumber(item.dailyRate) * 100, 4),
+      minAmount: toNumber(publicPackage?.minTtoAmount, 100),
+      status: toString(item.packageId) === "pkg-720" ? "INACTIVE" : "ACTIVE",
+      maxDailyRate: round(toNumber(item.maxDailyRate) * 100, 4),
+      updatedAt: formatAdminDate(item.updatedAt),
+      supportsRateEdit: true,
+    } satisfies AdminBondingPackage;
+  });
+  const packageNameById = new Map(packages.map((item) => [item.packageId, item.name]));
+  const activeBondings = mockAdminBondingsResponse.map((item) => ({
+    id: toString(item.id),
+    userWallet: toString(item.walletAddress),
+    packageName:
+      packageNameById.get(toString(item.packageId)) ?? toString(item.packageId, "Bonding Package"),
+    amount: toNumber(item.principalTto),
+    startDate: formatAdminDate(item.startDate, false),
+    endDate: formatAdminDate(item.endDate, false),
+    status: mapLiveBondingStatus(toString(item.status, "active")),
+  }));
+  const packageBreakdown = packages.map((item) => ({
     label: item.name,
-    value: adminActiveBondings
+    value: activeBondings
       .filter((bonding) => bonding.packageName === item.name)
       .reduce((sum, bonding) => sum + bonding.amount, 0),
   }));
@@ -401,10 +468,10 @@ function getAdminBondingMockData(): AdminBondingData {
     meta: {
       source: "mock",
     },
-    packages: adminBondingPackages,
-    activeBondings: adminActiveBondings,
+    packages,
+    activeBondings,
     packageBreakdown,
-    summary: buildBondingSummary(adminBondingPackages, adminActiveBondings),
+    summary: buildBondingSummary(packages, activeBondings),
     capabilities: {
       createPackage: true,
       togglePackage: true,
@@ -418,9 +485,9 @@ function getAdminTransactionsMockData(): AdminTransactionsData {
     meta: {
       source: "mock",
     },
-    purchases: adminPurchases,
+    purchases: mockAdminDepositsResponse.map(mapAdminPurchase),
     swaps: adminSwaps,
-    withdrawals: adminWithdrawals,
+    withdrawals: mockAdminWithdrawalsResponse.map(mapAdminWithdrawal),
     capabilities: {
       liveSwaps: true,
       retryFailedWithdrawal: false,
