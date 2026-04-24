@@ -34,9 +34,6 @@ yarn-error.log*
 .env*
 .env.local
 
-# markdown files
-AGENTS.md
-
 # vercel
 .vercel
 
