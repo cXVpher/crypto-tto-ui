@@ -33,9 +33,9 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 .env.local
-TO-DO.md
-TAILSCALE-SETUP.md
 
+# markdown files
+AGENTS.md
 
 # vercel
 .vercel
